@@ -388,3 +388,9 @@ tags
 # Ignore all local history of files
 .history
 .ionide
+
+### CAFAna and icarus related spams ###
+# ignore cafe stuff
+*.pcm
+*.so
+*.d
