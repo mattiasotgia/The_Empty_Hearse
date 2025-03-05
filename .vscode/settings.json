@@ -1,5 +1,9 @@
 {
     "files.associations": {
-        "recoEnu_efficiency.C": "cpp"
+        "recoEnu_efficiency.C": "cpp",
+        "count_event.C": "cpp",
+        "check_ifCheated.C": "cpp",
+        "1muNp_cheating_score.C": "cpp",
+        "cheating_score.C": "cpp"
     }
 }

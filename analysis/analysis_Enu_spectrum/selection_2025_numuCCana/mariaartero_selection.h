@@ -7,8 +7,7 @@
 #include "sbnana/CAFAna/Cuts/TruthCuts.h"
 #include "sbnana/CAFAna/Systs/SBNWeightSysts.h"
 #include "sbnana/CAFAna/Analysis/ExpInfo.h"
-#include "sbnanaobj/StandardRecord/Proxy/SRProxy.h" //after v09_44 release
-// #include "sbnana/CAFAna/Systs/NuMIFluxSysts.h"
+#include "sbnanaobj/StandardRecord/Proxy/SRProxy.h"
 
 #include "sbnana/SBNAna/Vars/Vars.h"
 #include "sbnana/SBNAna/Vars/Binnings.h"
@@ -32,30 +31,17 @@
 #include "TPad.h"
 #include "stdio.h"
 #include "TProfile.h"
-using namespace ana;
 
-// ofstream MyFile22("signal_mc.txt");
-// ofstream MyFile("Debug.txt");
-// ofstream MyFile("Selected_9435.txt");
-// ofstream MyFile("test_spacepoints_11982.txt");
-// ofstream MyFile("Optim_pscore_prescaled.txt");
-// ofstream MyFile2("counting_shortsignal.txt");
 
-// ofstream MyFile("Output_tpcind2transparent.txt");
-// ofstream MyFile("Test_MC_reco.txt");
-// ofstream MyFile2("output_pT_class_true.txt");
+TFile *file = TFile::Open(
+  "/exp/icarus/app/users/marterop/dev_areas/dEdxrestemplates.root"
+);
 
-// ofstream MyFile2("new_signal_mc_CH.txt");
-// ofstream MyFile3("signal_mc_ML.txt");
+// Selection for cnaf
+// TFile* file = TFile::Open(
+//   "/storage/gpfs_data/icarus/local/users/marterop/sbnana_v09_78_06/mc_test/dEdxrestemplates.root"
+// );
 
-// ofstream MyFile("test_taskforce_30_1muNp_MC.txt");
-// ofstream MyFile("test_taskforce_30_1muNp_DATA_20cm.txt");
-// ofstream MyFile("test_taskforce_30_1muNp_DATA_10cm_EW_WE.txt");
-// ofstream MyFile2("test_taskforce_30_loose_DATA_10cm.txt");
-
-TFile *file = TFile::Open("/exp/icarus/app/users/marterop/dev_areas/dEdxrestemplates.root");
-
-// TFile* file = TFile::Open("/storage/gpfs_data/icarus/local/users/marterop/sbnana_v09_78_06/mc_test/dEdxrestemplates.root");
 auto dedx_range_pro = (TProfile *)file->Get("dedx_range_pro");
 auto dedx_range_ka = (TProfile *)file->Get("dedx_range_ka");
 auto dedx_range_pi = (TProfile *)file->Get("dedx_range_pi");
@@ -219,7 +205,7 @@ bool isInFV(double x, double y, double z)
            (z > -894.95 + 30 && z < 894.95 - 50)));
 }
 
-bool isInContained(double x, double y, double z, double dist)
+bool isInContained(double x, double y, double z, double dist = 5)
 {
   if (std::isnan(x) || std::isnan(y) || std::isnan(z))
     return false;
@@ -229,14 +215,6 @@ bool isInContained(double x, double y, double z, double dist)
            (x > 61.94 + dist && x < 358.49 - dist)) &&
           ((y > -181.86 + dist && y < 134.96 - dist) &&
            (z > -894.95 + dist && z < 894.95 - dist)));
-
-  /*
-  //10 cm containment for Y in both cryo
-  return (( ( x < -61.94 - dist && x > -358.49 + dist ) ||
-  ( x >  61.94 + dist && x <  358.49 - dist )) &&
-  ( ( y > -181.86 + 10 && y < 134.96 - 10 ) &&
-  ( z > -894.95 + dist && z < 894.95 - dist ) ));
-  */
 }
 
 bool isInActive(double x, double y, double z)
@@ -248,16 +226,6 @@ bool isInActive(double x, double y, double z)
            (x > 61.94 && x < 358.49)) &&
           ((y > -181.86 && y < 134.96) &&
            (z > -894.95 && z < 894.95)));
-}
-
-bool isInContained(double x, double y, double z)
-{
-  if (std::isnan(x) || std::isnan(y) || std::isnan(z))
-    return false;
-  return (((x < -61.94 - 5 && x > -358.49 + 5) ||
-           (x > 61.94 + 5 && x < 358.49 - 5)) &&
-          ((y > -181.86 + 5 && y < 134.96 - 5) &&
-           (z > -894.95 + 5 && z < 894.95 - 5)));
 }
 
 bool isInDetector(double x, double y, double z)
@@ -312,7 +280,7 @@ bool all_contained_mc(const caf::SRSpillProxy *sr, const caf::Proxy<caf::SRTrueI
     // check if charged primaries are contained:
     if (abs(ipart.pdg) == 13 || abs(ipart.pdg) == 2212 || abs(ipart.pdg) == 211 || abs(ipart.pdg) == 11)
     {
-      if (isInContained(ipart.end.x, ipart.end.y, ipart.end.z) == false)
+      if (!isInContained(ipart.end.x, ipart.end.y, ipart.end.z))
       {
         return false;
       }
@@ -327,7 +295,7 @@ bool all_contained_mc(const caf::SRSpillProxy *sr, const caf::Proxy<caf::SRTrueI
         {
           if (abs(itrue.pdg) == 13 || abs(itrue.pdg) == 2212 || abs(itrue.pdg) == 211 || abs(itrue.pdg) == 11)
           {
-            if (isInContained(itrue.end.x, itrue.end.y, itrue.end.z) == false)
+            if (!isInContained(itrue.end.x, itrue.end.y, itrue.end.z))
             {
               return false;
             }

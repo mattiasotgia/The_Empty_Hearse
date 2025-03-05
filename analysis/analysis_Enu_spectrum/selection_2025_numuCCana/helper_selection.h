@@ -34,28 +34,9 @@
 #include "TProfile.h"
 using namespace ana;
 
-// ofstream MyFile22("signal_mc.txt");
-// ofstream MyFile("Debug.txt");
-// ofstream MyFile("Selected_9435.txt");
-// ofstream MyFile("test_spacepoints_11982.txt");
-// ofstream MyFile("Optim_pscore_prescaled.txt");
-// ofstream MyFile2("counting_shortsignal.txt");
+TFile* file = TFile::Open("/exp/icarus/app/users/marterop/dev_areas/dEdxrestemplates.root");
 
-// ofstream MyFile("Output_tpcind2transparent.txt");
-// ofstream MyFile("Test_MC_reco.txt");
-// ofstream MyFile2("output_pT_class_true.txt");
-
-// ofstream MyFile2("new_signal_mc_CH.txt");
-// ofstream MyFile3("signal_mc_ML.txt");
-
-// ofstream MyFile("test_taskforce_30_1muNp_MC.txt");
-// ofstream MyFile("test_taskforce_30_1muNp_DATA_20cm.txt");
-// ofstream MyFile("test_taskforce_30_1muNp_DATA_10cm_EW_WE.txt");
-// ofstream MyFile2("test_taskforce_30_loose_DATA_10cm.txt");
-
-// TFile* file = TFile::Open("/exp/icarus/app/users/marterop/dev_areas/dEdxrestemplates.root");
-
-TFile *file = TFile::Open("/storage/gpfs_data/icarus/local/users/marterop/sbnana_v09_78_06/mc_test/dEdxrestemplates.root");
+// TFile *file = TFile::Open("/storage/gpfs_data/icarus/local/users/marterop/sbnana_v09_78_06/mc_test/dEdxrestemplates.root");
 auto dedx_range_pro = (TProfile *)file->Get("dedx_range_pro");
 auto dedx_range_ka = (TProfile *)file->Get("dedx_range_ka");
 auto dedx_range_pi = (TProfile *)file->Get("dedx_range_pi");
@@ -1398,22 +1379,22 @@ const SpillCut kCRTPMTNeutrino([](const caf::SRSpillProxy *spill)
   }
   return false; });
 
-const SpillMultiVar kNu_energy_reco_Np([](const caf::SRSpillProxy *sr) -> std::vector<double>
-                                       {
-    std::vector<double> vector_active;
+// const SpillMultiVar kNu_energy_reco_Np([](const caf::SRSpillProxy *sr) -> std::vector<double>
+//                                        {
+//     std::vector<double> vector_active;
 
-    for (auto const& islc : sr->slc){
-        int ipfp_mu = -1;
-        int ipfp_pro = -1;
-    if(automatic_selection_1muNp(sr, islc )){
-        ipfp_mu = automatic_selection_mu_index(sr,islc);
-        vector_active.push_back(Neutrino_energy_reco_Np(islc,ipfp_mu)/1000); 
+//     for (auto const& islc : sr->slc){
+//         int ipfp_mu = -1;
+//         int ipfp_pro = -1;
+//     if(automatic_selection_1muNp(sr, islc )){
+//         ipfp_mu = automatic_selection_mu_index(sr,islc);
+//         vector_active.push_back(Neutrino_energy_reco_Np(islc,ipfp_mu)/1000); 
         
-    }//selected by the automatic selection
+//     }//selected by the automatic selection
     
-    }//loop over slices
+//     }//loop over slices
 
- 	return vector_active; });
+//  	return vector_active; });
 
 const SpillCut kGoodRuns([](const caf::SRSpillProxy *spill)
                          {
