@@ -394,3 +394,8 @@ tags
 *.pcm
 *.so
 *.d
+
+*_dictUmbrella.h
+*_dictContent.h
+
+*_dict*
