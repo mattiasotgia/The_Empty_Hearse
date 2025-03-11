@@ -4,6 +4,11 @@
         "count_event.C": "cpp",
         "check_ifCheated.C": "cpp",
         "1muNp_cheating_score.C": "cpp",
-        "cheating_score.C": "cpp"
-    }
+        "cheating_score.C": "cpp",
+        "test_vtx_position.C": "cpp",
+        "test_vars.C": "cpp"
+    },
+    "C_Cpp.default.includePath": [
+        "./check_cheating/helper.h"
+    ]
 }

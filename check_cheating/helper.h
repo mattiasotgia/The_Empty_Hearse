@@ -57,16 +57,16 @@ namespace logger {
 } // namespace log
 
 namespace utils {
-    int is_true_track(const caf::Proxy<caf::SRPFP> &pfp, const caf::SRSpillProxy *SR = nullptr) {
+    int is_true_track(const caf::Proxy<caf::SRPFP> &pfp, const caf::SRSpillProxy *spill = nullptr) {
         if (pfp.trk.truth.p.pdg != pfp.shw.truth.p.pdg) {
-            if (SR != nullptr)
-                logger::log(logger::level::error) << "Found different pdg in run:event " << run(SR) << ":" << event(SR) << std::endl;
+            if (spill != nullptr)
+                logger::log(logger::level::error) << "Found different pdg in run:event " << run(spill) << ":" << event(spill) << std::endl;
             else
                 logger::log(logger::level::error) << "Found different pdg: " << pfp.trk.truth.p.pdg << " (pfp.trk.truth.p.pdg) and " << pfp.shw.truth.p.pdg << " (pfp.shw.truth.p.pdg)" << std::endl;
             return -1;
         }
 
-        int true_pdg = pfp.trk.truth.p.pdg;
+        int true_pdg = (pfp.trk.truth.p.pdg == std::numeric_limits<int>::min()) ? pfp.shw.truth.p.pdg : pfp.trk.truth.p.pdg;
 
         std::vector<int> track_pdgs{
             13, 211, 2212
@@ -305,76 +305,79 @@ namespace cheating {
                 
                 if (pfp.parent == -1) continue; // Neutrino PFP :) all other variables are empty
 
+                if (utils::is_true_track(pfp, spill) == true) {
 
-                ///////////////////////////////////////////
-                ////////////////// TRACK //////////////////
-                ///////////////////////////////////////////
+                    ///////////////////////////////////////////
+                    ////////////////// TRACK //////////////////
+                    ///////////////////////////////////////////
 
-                            //[ipfp = 0]
-                std::cout << "           --> TRK properties: " << std::endl;
-                std::cout << "                             .trk:         " 
-                          << "len = " << pfp.trk.len << " cm, "
-                          << "start = (" << pfp.trk.start.x << ", " << pfp.trk.start.y << ", " <<pfp.trk.start.z << "), "
-                          << "end = (" << pfp.trk.end.x << ", " << pfp.trk.end.y << ", " <<pfp.trk.end.z << "), "
-                          << std::endl
-                          << "                                           "
-                          << "dir = (" << pfp.trk.dir.x << ", " << pfp.trk.dir.y << ", " <<pfp.trk.dir.z << "), "
-                          << "dir_end = (" << pfp.trk.dir_end.x << ", " << pfp.trk.dir_end.y << ", " <<pfp.trk.dir_end.z << "), "
-                          << "costh = " << pfp.trk.costh << ", "
-                          << "phi = " << pfp.trk.phi << ", "
-                          << std::endl;
+                                //[ipfp = 0]
+                    std::cout << "           --> TRK properties: " << std::endl;
+                    std::cout << "                             .trk:         " 
+                              << "len = " << pfp.trk.len << " cm, "
+                              << "start = (" << pfp.trk.start.x << ", " << pfp.trk.start.y << ", " <<pfp.trk.start.z << "), "
+                              << "end = (" << pfp.trk.end.x << ", " << pfp.trk.end.y << ", " <<pfp.trk.end.z << "), "
+                              << std::endl
+                              << "                                           "
+                              << "dir = (" << pfp.trk.dir.x << ", " << pfp.trk.dir.y << ", " <<pfp.trk.dir.z << "), "
+                              << "dir_end = (" << pfp.trk.dir_end.x << ", " << pfp.trk.dir_end.y << ", " <<pfp.trk.dir_end.z << "), "
+                              << "costh = " << pfp.trk.costh << ", "
+                              << "phi = " << pfp.trk.phi << ", "
+                              << std::endl;
 
-                std::cout << "                             .trk.truth.p: "
-                          << "len = " << pfp.trk.truth.p.length << " cm, "
-                          << "start = (" << pfp.trk.truth.p.start.x << ", " << pfp.trk.truth.p.start.y << ", " <<pfp.trk.truth.p.start.z << "), "
-                          << "end = (" << pfp.trk.truth.p.end.x << ", " << pfp.trk.truth.p.end.y << ", " <<pfp.trk.truth.p.end.z << "), "
-                          << "gen = (" << pfp.trk.truth.p.gen.x << ", " << pfp.trk.truth.p.gen.y << ", " <<pfp.trk.truth.p.gen.z << "), "
-                          << std::endl
-                          << "                                           "
-                          << "pdg = " << pfp.trk.truth.p.pdg << ", "
-                          << "cont_tpc = " << boolean_print[pfp.trk.truth.p.cont_tpc] << ", "
-                          << "crosses_tpc = " << boolean_print[pfp.trk.truth.p.crosses_tpc] << ", "
-                          << "contained = " << boolean_print[pfp.trk.truth.p.contained] << ", "
-                          << "cryostat = " << pfp.trk.truth.p.cryostat
-                          << std::endl;
-                std::cout << "                             .trk.truth.bestmatch: "
-                          << "hit_completeness = " << pfp.trk.truth.bestmatch.hit_completeness << ", "
-                          << "hit_purity = " << pfp.trk.truth.bestmatch.hit_purity
-                          << std::endl;
+                    std::cout << "                             .trk.truth.p: "
+                              << "len = " << pfp.trk.truth.p.length << " cm, "
+                              << "start = (" << pfp.trk.truth.p.start.x << ", " << pfp.trk.truth.p.start.y << ", " <<pfp.trk.truth.p.start.z << "), "
+                              << "end = (" << pfp.trk.truth.p.end.x << ", " << pfp.trk.truth.p.end.y << ", " <<pfp.trk.truth.p.end.z << "), "
+                              << "gen = (" << pfp.trk.truth.p.gen.x << ", " << pfp.trk.truth.p.gen.y << ", " <<pfp.trk.truth.p.gen.z << "), "
+                              << std::endl
+                              << "                                           "
+                              << "pdg = " << pfp.trk.truth.p.pdg << ", "
+                              << "cont_tpc = " << boolean_print[pfp.trk.truth.p.cont_tpc] << ", "
+                              << "crosses_tpc = " << boolean_print[pfp.trk.truth.p.crosses_tpc] << ", "
+                              << "contained = " << boolean_print[pfp.trk.truth.p.contained] << ", "
+                              << "cryostat = " << pfp.trk.truth.p.cryostat
+                              << std::endl;
+                    std::cout << "                             .trk.truth.bestmatch: "
+                              << "hit_completeness = " << pfp.trk.truth.bestmatch.hit_completeness << ", "
+                              << "hit_purity = " << pfp.trk.truth.bestmatch.hit_purity
+                              << std::endl;
+                } else {
 
-                ///////////////////////////////////////////
-                ///////////////// SHOWER //////////////////
-                ///////////////////////////////////////////
-                
-                std::cout << "           --> SHW properties: " << std::endl;
-                std::cout << "                             .shw:         " 
-                          << "len = " << pfp.shw.len << " cm, "
-                          << "start = (" << pfp.shw.start.x << ", " << pfp.shw.start.y << ", " <<pfp.shw.start.z << "), "
-                          << "end = (" << pfp.shw.end.x << ", " << pfp.shw.end.y << ", " <<pfp.shw.end.z << "), "
-                          << std::endl
-                          << "                                           "
-                          << "dir = (" << pfp.shw.dir.x << ", " << pfp.shw.dir.y << ", " <<pfp.shw.dir.z << "), "
-                          << "conversion_gap = " << pfp.shw.conversion_gap << " cm, "
-                          << "density = " << pfp.shw.density << " MeV/cm, "
-                          << "open_angle = " << pfp.shw.open_angle << " rad"
-                          << std::endl;
-                std::cout << "                             .shw.truth.p: "
-                          << "len = " << pfp.shw.truth.p.length << " cm, "
-                          << "start = (" << pfp.shw.truth.p.start.x << ", " << pfp.shw.truth.p.start.y << ", " <<pfp.shw.truth.p.start.z << "), "
-                          << "end = (" << pfp.shw.truth.p.end.x << ", " << pfp.shw.truth.p.end.y << ", " <<pfp.shw.truth.p.end.z << "), "
-                          << "gen = (" << pfp.shw.truth.p.gen.x << ", " << pfp.shw.truth.p.gen.y << ", " <<pfp.shw.truth.p.gen.z << "), "
-                          << std::endl
-                          << "                                           "
-                          << "pdg = " << pfp.shw.truth.p.pdg << ", "
-                          << "cont_tpc = " << boolean_print[pfp.shw.truth.p.cont_tpc] << ", "
-                          << "crosses_tpc = " << boolean_print[pfp.shw.truth.p.crosses_tpc] << ", "
-                          << "contained = " << boolean_print[pfp.shw.truth.p.contained] << ", "
-                          << "cryostat = " << pfp.shw.truth.p.cryostat
-                          << std::endl;
-                std::cout << "                             .shw.truth.bestmatch: "
-                          << "hit_completeness = " << pfp.shw.truth.bestmatch.hit_completeness << ", "
-                          << "hit_purity = " << pfp.shw.truth.bestmatch.hit_purity
-                          << std::endl;
+                    ///////////////////////////////////////////
+                    ///////////////// SHOWER //////////////////
+                    ///////////////////////////////////////////
+                    
+                    std::cout << "           --> SHW properties: " << std::endl;
+                    std::cout << "                             .shw:         " 
+                              << "len = " << pfp.shw.len << " cm, "
+                              << "start = (" << pfp.shw.start.x << ", " << pfp.shw.start.y << ", " <<pfp.shw.start.z << "), "
+                              << "end = (" << pfp.shw.end.x << ", " << pfp.shw.end.y << ", " <<pfp.shw.end.z << "), "
+                              << std::endl
+                              << "                                           "
+                              << "dir = (" << pfp.shw.dir.x << ", " << pfp.shw.dir.y << ", " <<pfp.shw.dir.z << "), "
+                              << "conversion_gap = " << pfp.shw.conversion_gap << " cm, "
+                              << "density = " << pfp.shw.density << " MeV/cm, "
+                              << "open_angle = " << pfp.shw.open_angle << " rad"
+                              << std::endl;
+                    std::cout << "                             .shw.truth.p: "
+                              << "len = " << pfp.shw.truth.p.length << " cm, "
+                              << "start = (" << pfp.shw.truth.p.start.x << ", " << pfp.shw.truth.p.start.y << ", " <<pfp.shw.truth.p.start.z << "), "
+                              << "end = (" << pfp.shw.truth.p.end.x << ", " << pfp.shw.truth.p.end.y << ", " <<pfp.shw.truth.p.end.z << "), "
+                              << "gen = (" << pfp.shw.truth.p.gen.x << ", " << pfp.shw.truth.p.gen.y << ", " <<pfp.shw.truth.p.gen.z << "), "
+                              << std::endl
+                              << "                                           "
+                              << "pdg = " << pfp.shw.truth.p.pdg << ", "
+                              << "cont_tpc = " << boolean_print[pfp.shw.truth.p.cont_tpc] << ", "
+                              << "crosses_tpc = " << boolean_print[pfp.shw.truth.p.crosses_tpc] << ", "
+                              << "contained = " << boolean_print[pfp.shw.truth.p.contained] << ", "
+                              << "cryostat = " << pfp.shw.truth.p.cryostat
+                              << std::endl;
+                    std::cout << "                             .shw.truth.bestmatch: "
+                              << "hit_completeness = " << pfp.shw.truth.bestmatch.hit_completeness << ", "
+                              << "hit_purity = " << pfp.shw.truth.bestmatch.hit_purity
+                              << std::endl;
+                }
 
                 ipfp ++ ;
             } // loop over pfp(s)
