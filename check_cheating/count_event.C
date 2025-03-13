@@ -47,8 +47,8 @@ ana::SpillVar get_event_cheated([](const caf::SRSpillProxy *sr) -> double {
 
 void count_event () {
 
-    ana::SpectrumLoader non_cheated("msotgia_v09_89_01_01p03_BNB_production_non_cheated_stage1tocaf_flatcafs");
-    ana::SpectrumLoader cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_stage1tocaf_flatcafs");
+    ana::SpectrumLoader non_cheated("msotgia_v09_89_01_01p03_BNB_production_non_cheated_reco_ana_stage1tocaf_flatcafs");
+    ana::SpectrumLoader cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_reco_ana_stage1tocaf_flatcafs");
 
     ana::Spectrum non_cheated_spectrum("", simple, non_cheated, get_event_non_cheated, ana::kNoSpillCut);
     ana::Spectrum cheated_spectrum("", simple, cheated, get_event_cheated, ana::kNoSpillCut);
