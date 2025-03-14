@@ -6,14 +6,13 @@
 #include "selection.h"
 
 template <class T> 
-struct plot1D {
+struct variables {
     std::string name;
-    const ana::Binning bin;
-    T var;
+    std::vector<T> vars;
 };
 
-struct spectra {
-    ana::Spectrum *spectra;
+struct tree {
+    ana::Tree *tree;
     std::string name;
 };
 
@@ -27,7 +26,30 @@ void reco_1muNp() {
     ana::SpectrumLoader loader_cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_reco_ana_stage1tocaf_flatcafs");
 
 
+    std::unique_ptr<ana::Tree> cheated(new ana::Tree(
+        "cheated", 
+        {"reco_E"}, 
+        loader_cheated, 
+        {vars::reco::slice_neutrino_energy_1muNp}, 
+        cheating::cut_bad_events, 
+        cuts::truth::slice_numuCC && cuts::reco::slice_at_least_mu
+    )); 
 
+    std::unique_ptr<ana::Tree> non_cheated(new ana::Tree(
+        "non_cheated", 
+        {"reco_E"}, 
+        loader_non_cheated, 
+        {vars::reco::slice_neutrino_energy_1muNp}, 
+        cheating::cut_bad_events, 
+        cuts::truth::slice_numuCC && cuts::reco::slice_at_least_mu
+    )); 
+
+    loader_cheated.Go();
+    loader_non_cheated.Go();
+
+    std::unique_ptr<TFile> file(new TFile("reco1muNp_alldata.root", "RECREATE"));
+    cheated->SaveTo(file->mkdir("cheated"));
+    non_cheated->SaveTo(file->mkdir("non_cheated"));
 };
 
 #endif

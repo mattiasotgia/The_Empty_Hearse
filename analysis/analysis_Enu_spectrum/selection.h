@@ -21,20 +21,17 @@ namespace particle_data {
     namespace masses {
         double pion = 139.57039;        // PDG value 2024 [MeV]
         double proton = 938.27208816;   // PDG value 2024 [MeV]
+        double muon = 105.6583755;      // PDG value 2024 [MeV]
     }
 } // namespace particle_data
 
 namespace var_utils {
 
-    std::string dEdx_temp = 
-        "/exp/icarus/app/users/msotgia/analysis/sbnana_v09_93_01_thesis_analysis/analysis/dEdxrestemplates.root"
-    TFile* file = TFile::Open(dEdx_temp.c_str());
-
-    auto dedx_range_pro = (TProfile *)file->Get("dedx_range_pro");
-    auto dedx_range_ka  = (TProfile *)file->Get("dedx_range_ka");
-    auto dedx_range_pi  = (TProfile *)file->Get("dedx_range_pi");
-    auto dedx_range_mu  = (TProfile *)file->Get("dedx_range_mu");
-
+    struct values_minmax {
+        double min;
+        double max;
+    }; 
+    
     struct chi2
     {
         double muon;
@@ -42,6 +39,19 @@ namespace var_utils {
         double kaon;
         double pi;
     }; 
+
+    double dist_cut = 10.;
+    values_minmax barycenterFM_deltaZ_Trigger = {0., 100.};
+
+    std::string dEdx_temp = 
+        "/exp/icarus/app/users/msotgia/analysis/sbnana_v09_93_01_thesis_analysis/analysis/dEdxrestemplates.root";
+    TFile* file = TFile::Open(dEdx_temp.c_str());
+
+    auto dedx_range_pro = (TProfile *)file->Get("dedx_range_pro");
+    auto dedx_range_ka  = (TProfile *)file->Get("dedx_range_ka");
+    auto dedx_range_pi  = (TProfile *)file->Get("dedx_range_pi");
+    auto dedx_range_mu  = (TProfile *)file->Get("dedx_range_mu");
+
     
 
     chi2 chi2_ALG (std::vector<double> &dEdx, std::vector<double> &RR, double rr_min, double rr_max) {
@@ -81,8 +91,8 @@ namespace var_utils {
             // if (i == 0 || i == trkdedx.size() - 1) continue;
             avgdedx += trkdedx[i];
             if (trkres[i] < 26) {
-                PIDA += trkdedx[i] * pow(trkres[i], 0.42);
-                vpida.push_back(trkdedx[i] * pow(trkres[i], 0.42));
+                PIDA += trkdedx[i] * std::pow(trkres[i], 0.42);
+                vpida.push_back(trkdedx[i] * std::pow(trkres[i], 0.42));
                 used_trkres++;
             }
             if (trkdedx[i] > 100 || trkdedx[i] < threshold)
@@ -134,10 +144,10 @@ namespace var_utils {
                 
                 errdedx *= trkdedx[i];
                 
-                chi2pro += pow((trkdedx[i] - bincpro) / std::sqrt(pow(binepro, 2) + pow(errdedx, 2)), 2);
-                chi2ka += pow((trkdedx[i] - bincka) / std::sqrt(pow(bineka, 2) + pow(errdedx, 2)), 2);
-                chi2pi += pow((trkdedx[i] - bincpi) / std::sqrt(pow(binepi, 2) + pow(errdedx, 2)), 2);
-                chi2mu += pow((trkdedx[i] - bincmu) / std::sqrt(pow(binemu, 2) + pow(errdedx, 2)), 2);
+                chi2pro += std::pow((trkdedx[i] - bincpro) / std::sqrt(std::pow(binepro, 2) + std::pow(errdedx, 2)), 2);
+                chi2ka  += std::pow((trkdedx[i] - bincka)  / std::sqrt(std::pow(bineka, 2)  + std::pow(errdedx, 2)), 2);
+                chi2pi  += std::pow((trkdedx[i] - bincpi)  / std::sqrt(std::pow(binepi, 2)  + std::pow(errdedx, 2)), 2);
+                chi2mu  += std::pow((trkdedx[i] - bincmu)  / std::sqrt(std::pow(binemu, 2)  + std::pow(errdedx, 2)), 2);
                 // std::cout<<i<<" "<<trkdedx[i]<<" "<<trkres[i]<<" "<<bincpro<<std::endl;
                 ++npt;
             }
@@ -286,7 +296,7 @@ namespace var_utils {
             if (
                 chi2_values.proton >= 100           && 
                 (rec_vtx - start).Mag() < dist_cut  && 
-                sqrt ( pow(particle_data::masses::pion, 2) + pow(start_mom_V3.Mag() * 1000, 2) ) - particle_data::masses::pion >= 25.0 && 
+                std::sqrt ( std::pow(particle_data::masses::pion, 2) + std::pow(start_mom_V3.Mag() * 1000, 2) ) - particle_data::masses::pion >= 25.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary
             )  return 2;
 
@@ -301,7 +311,7 @@ namespace var_utils {
             if (
                 chi2_values.proton < 100            && 
                 (rec_vtx - start).Mag() < dist_cut  && 
-                sqrt ( pow(particle_data::masses::proton, 2) + pow(start_mom_V3.Mag() * 1000, 2) ) - particle_data::masses::proton >= 50.0 && 
+                std::sqrt ( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3.Mag() * 1000, 2) ) - particle_data::masses::proton >= 50.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary
             ) return 1;
 
@@ -317,7 +327,7 @@ namespace var_utils {
                 );
 
                 if (
-                    sqrt(pow(particle_data::masses::proton 2) + pow(start_mom_V3_2.Mag() * 1000, 2)) - particle_data::masses::proton >= 50.0 && 
+                    std::sqrt( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3_2.Mag() * 1000, 2)) - particle_data::masses::proton >= 50.0 && 
                     (rec_vtx - start).Mag() < dist_cut && 
                     slice.reco.pfp[ipfp].parent_is_primary
                 ) return 1;
@@ -391,7 +401,7 @@ namespace cuts {
     } // bool in_detector
 
     namespace truth {
-        const ana::Cut slice_numuCC = IsNumuCC;
+        const ana::Cut slice_numuCC(ana::kIsNumuCC);
 
         const ana::Cut slice_vtx_in_FV ([](const caf::SRSliceProxy *slice) -> bool {
             return in_FV (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z);
@@ -459,6 +469,7 @@ namespace cuts {
                     } // loop spill->true_particles
                 } // loop nu.prim
             } // loop spill->mc.nu
+            return true;
         }); // const ana::SpillCut spill_all_trk_contained_MC
 
         const ana::SpillCut spill_all_trk_contained_truth ([](const caf::SRSpillProxy *spill) -> bool {
@@ -506,11 +517,29 @@ namespace cuts {
                     } // loop spill->true_particles
                 } // loop slc.truth.prim
             } // loop spill->slc
+            return true;
         }); // const ana::SpillCut spill_all_trk_contained_truth
 
+        const ana::Cut slice_1mu_only ([](const caf::SRSliceProxy *slice) -> bool {
+            int muon_n = 0;
+            for (auto const& prim: slice->truth.prim) {
+                if (std::abs(prim.pdg) == 13) muon_n ++;
+            } // loop slice->truth.prim
+            return muon_n == 1;
+        }); // const ana::Cut slice_1mu_only
     } // namespace truth
 
     namespace reco {
+        const ana::Cut slice_at_least_mu ([](const caf::SRSliceProxy *slice) -> bool {
+            /* We should at least found one muon, otherwise something bad happens
+            */
+
+            // Using dist_cut = 10 [cm]
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut); 
+            if (ipfp_muon == -1) return false; // no muon found ahaha
+            return true;
+        }); // const ana::Cut slice_at_least_mu
+
         const ana::Cut slice_all_trk_contained ([](const caf::SRSliceProxy *slice) -> bool {
             for (auto const& pfp: slice->reco.pfp) {
                 if (std::isnan(pfp.trk.start.x) || std::isnan(pfp.trk.end.x) || std::isnan(pfp.trk.len)) 
@@ -522,10 +551,11 @@ namespace cuts {
                 // if (!(slice.reco.pfp[ipfp].parent_is_primary )) continue; // Skip secondaries
                 // if (slice.reco.pfp[ipfp].trackScore<0.4) continue;        // Want to check only tracks??
 
-                if ((pfp.trk.start.x * slice.vertex.x) < 0) return false; // PFP crossing cryostats :(
+                if ((pfp.trk.start.x * slice->vertex.x) < 0) return false; // PFP crossing cryostats :(
                 if (!in_contained(pfp.trk.end.x, pfp.trk.end.y, pfp.trk.end.z, 5.)) 
                     return false;
-            }
+            } // loop pfp
+            return true;
         }); // const ana::Cut slice_all_contained
         
         const ana::Cut slice_vtx_in_FV ([](const caf::SRSliceProxy *slice) -> bool {
@@ -545,7 +575,7 @@ namespace cuts {
             */
 
             // Using dist_cut = 10 [cm]
-            int ipfp_muon = var_utils::id_pfp(*slice, 10); 
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut); 
             if (ipfp_muon == -1) return false; // no muon found ahaha
 
             return slice->reco.pfp[ipfp_muon].trk.len > 50;
@@ -556,10 +586,10 @@ namespace cuts {
             */
 
             // Using dist_cut = 10 [cm]
-            int ipfp_muon = var_utils::id_pfp(*slice, 10); 
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut); 
             if (ipfp_muon == -1) return false; // no muon found ahaha
 
-            return in_contained (slice->reco.pfp[ipfp].trk.end.x, slice->reco.pfp[ipfp].trk.end.y, slice->reco.pfp[ipfp].trk.end.z, 5.);
+            return in_contained (slice->reco.pfp[ipfp_muon].trk.end.x, slice->reco.pfp[ipfp_muon].trk.end.y, slice->reco.pfp[ipfp_muon].trk.end.z, 5.);
         }); // const ana::Cut slice_mu_in_contained
 
         const ana::Cut slice_mu_not_crossing ([](const caf::SRSliceProxy *slice) -> bool {
@@ -567,17 +597,20 @@ namespace cuts {
             */
 
             // Using dist_cut = 10 [cm]
-            int ipfp_muon = var_utils::id_pfp(*slice, 10); 
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut); 
             if (ipfp_muon == -1) return false; // no muon found ahaha
 
-            return slice->reco.pfp[ipfp].trk.end.x * slice->vertex.x > 0;
+            return slice->reco.pfp[ipfp_muon].trk.end.x * slice->vertex.x > 0;
         }); // const ana::Cut slice_mu_not_crossing
 
         const ana::Cut slice_barycenter ([](const caf::SRSliceProxy *slice) -> bool {
-            return (slice->barycenterFM.deltaZ_Trigger < 100 && slice->barycenterFM.deltaZ_Trigger > 0);
+            return (
+                slice->barycenterFM.deltaZ_Trigger < var_utils::barycenterFM_deltaZ_Trigger.max && 
+                slice->barycenterFM.deltaZ_Trigger > var_utils::barycenterFM_deltaZ_Trigger.min
+            );
         });
 
-        const ana::SpillCut CRTPMTNeutrino ([](const caf::SRSpillProxy *spill) -> bool {
+        const ana::SpillCut spill_CRTPMTNeutrino ([](const caf::SRSpillProxy *spill) -> bool {
 
             double flashtime = 0;
             
@@ -593,8 +626,8 @@ namespace cuts {
                     max_time = 1.5;
                 }
 
-                if (match.flashGateTime > min_time && match.flashGateTime < max_time && match.flashClassification == 0) {
-                    flashtime = match.flashGateTime;
+                if (crtpmt_match.flashGateTime > min_time && crtpmt_match.flashGateTime < max_time && crtpmt_match.flashClassification == 0) {
+                    flashtime = crtpmt_match.flashGateTime;
                     return true;
                 } 
                 // if (match.flashGateTime > -0.3 && match.flashGateTime < 1.3 && match.flashClassification == 0) { 
@@ -615,18 +648,101 @@ namespace vars {
              * Here only the computation should be performed, since the cuts will be applied
              * at the Tree/Spectrum stage
             */
-            return slice->truth.E // true neutrino energy in GeV
+            return slice->truth.E; // true neutrino energy in GeV
         });
     } // namespace truth
 
     namespace reco {
+        double neutrino_energy_Np (const caf::Proxy<caf::SRSlice> &slice, int ipfp_mu, int dist_emucut) {
+            /* Returns the neutrino energy in MeV 
+            */
+
+            float p_mu_x = -1, p_mu_y = -1, p_mu_z = -1;
+            float p_p_x = -1, p_p_y = -1, p_p_z = -1;
+            float p_tot_x = -1, p_tot_y = -1, p_tot_z = -1;
+            double E_mu = 0, E_p = 0;
+
+            int ipfp_pro = -1;
+
+            p_mu_x = slice.reco.pfp[ipfp_mu].trk.rangeP.p_muon * slice.reco.pfp[ipfp_mu].trk.dir.x;   // Momenta are in GeV
+            p_mu_y = slice.reco.pfp[ipfp_mu].trk.rangeP.p_muon * slice.reco.pfp[ipfp_mu].trk.dir.y;   // Momenta are in GeV
+            p_mu_z = slice.reco.pfp[ipfp_mu].trk.rangeP.p_muon * slice.reco.pfp[ipfp_mu].trk.dir.z;   // Momenta are in GeV
+            
+            double p_mu_tot = std::sqrt(p_mu_x * p_mu_x + p_mu_y * p_mu_y + p_mu_z * p_mu_z); // [GeV]
+            
+            E_mu = 1000 * std::sqrt(p_mu_tot * p_mu_tot + std::pow(particle_data::masses::muon, 2) / (1000 * 1000));
+
+            for (std::size_t ipfp = 0; ipfp < slice.reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_mu)
+                    continue;
+                if (var_utils::id_pfp(slice, ipfp, dist_emucut) == 1) {
+                    TVector3 start_mom;
+                    start_mom.SetXYZ(
+                        slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.x, 
+                        slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.y, 
+                        slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.z
+                    );
+                    E_p += std::sqrt(std::pow(particle_data::masses::proton, 2) + std::pow(start_mom.Mag() * 1000, 2)) - particle_data::masses::proton;
+                    ipfp_pro = ipfp;
+                } // this pfp is proton-like
+            } // loop pfp
+
+            return (E_mu + E_p) / 1000;
+        } // double neutrino_energy_Np
+
+        double neutrino_pT_Np (const caf::Proxy<caf::SRSlice> &islc, int ipfp_mu, int dist_cut) {
+
+            float p_p_x = 0, p_p_y = 0, p_p_z = 0;
+            float p_tot_x = 0, p_tot_y = 0, p_tot_z = 0;
+            
+            int ipfp_pro = -1;
+
+            float p_mu_x = (islc.reco.pfp[ipfp_mu].trk.rangeP.p_muon) * islc.reco.pfp[ipfp_mu].trk.dir.x;   // Momenta are in GeV
+            float p_mu_y = (islc.reco.pfp[ipfp_mu].trk.rangeP.p_muon) * islc.reco.pfp[ipfp_mu].trk.dir.y;   // Momenta are in GeV
+            float p_mu_z = (islc.reco.pfp[ipfp_mu].trk.rangeP.p_muon) * islc.reco.pfp[ipfp_mu].trk.dir.z;   // Momenta are in GeV
+
+            for (std::size_t ipfp = 0; ipfp < islc.reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_mu)
+                    continue;
+                if (var_utils::id_pfp(islc, ipfp, dist_cut) == 1) {
+                    p_p_x += (islc.reco.pfp[ipfp].trk.rangeP.p_proton) * islc.reco.pfp[ipfp].trk.dir.x;
+                    p_p_y += (islc.reco.pfp[ipfp].trk.rangeP.p_proton) * islc.reco.pfp[ipfp].trk.dir.y;
+                    p_p_z += (islc.reco.pfp[ipfp].trk.rangeP.p_proton) * islc.reco.pfp[ipfp].trk.dir.z;
+                    ipfp_pro = ipfp;
+                } // this pfp is proton-like
+            } // loop pfp
+
+            // if (ipfp_mu != -1 && ipfp_pro != -1) {
+                p_tot_x = p_p_x + p_mu_x;
+                p_tot_y = p_p_y + p_mu_y;
+                p_tot_z = p_p_z + p_mu_z;
+            // }
+
+            return std::sqrt( std::pow(p_tot_x, 2) + std::pow(p_tot_y, 2) );
+        } // double Transverse_mom_reco_Np
+
         const ana::Var slice_neutrino_energy_1muNp ([](const caf::SRSliceProxy *slice) -> double {
             /* This slice is the selected slice (so reco 1µNp or truth 1µNp)
              * Here only the computation should be performed, since the cuts will be applied
              * at the Tree/Spectrum stage
             */
             
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
+            return neutrino_energy_Np (*slice, ipfp_muon, var_utils::dist_cut);
+        }); // const ana::Var slice_neutrino_energy_reco_1muNp
+
+        const ana::Var slice_neutrino_pT_1muNp ([](const caf::SRSliceProxy *slice) -> double {
+            /* This slice is the selected slice (so reco 1µNp or truth 1µNp)
+             * Here only the computation should be performed, since the cuts will be applied
+             * at the Tree/Spectrum stage
+            */
+            
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return neutrino_pT_Np (*slice, ipfp_muon, var_utils::dist_cut);
         }); // const ana::Var slice_neutrino_energy_reco_1muNp
     } // namespace reco
 } // namespace vars
