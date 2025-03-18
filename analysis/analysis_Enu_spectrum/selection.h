@@ -23,9 +23,17 @@ namespace particle_data {
         double proton = 938.27208816;   // PDG value 2024 [MeV]
         double muon = 105.6583755;      // PDG value 2024 [MeV]
     }
+
+    enum int_type {
+        true_visible_1muNp,
+        true_visible_1mu1p,
+        unclassified
+    };
 } // namespace particle_data
 
 namespace var_utils {
+
+    using level_t = logger::level;
 
     struct values_minmax {
         double min;
@@ -52,7 +60,38 @@ namespace var_utils {
     auto dedx_range_pi  = (TProfile *)file->Get("dedx_range_pi");
     auto dedx_range_mu  = (TProfile *)file->Get("dedx_range_mu");
 
+    enum cut_type {
+        RECO,
+        TRUE_1muNp,
+        TRUE_1mu1p,
+        BOTH_1muNp,
+        BOTH_1mu1p
+    };
+
+    particle_data::int_type classification_type (const caf::SRSpillProxy*, const caf::SRSliceProxy*);
+    const ana::SpillVar make_spill_from_slice_(const ana::Var &slice_var, const ana::Cut &cut = ana::kNoCut,  cut_type what_to_cut_on = cut_type::RECO) {
+        return ana::SpillVar([&cut, &slice_var](const caf::SRSpillProxy *spill) -> double {
+            int selected_slices = 0;
+            double slice_value = -1;
     
+            for (auto const& slice: spill->slc) {
+    
+                if (what_to_cut_on == cut_type::RECO && !cut(&slice)) continue; 
+                if (what_to_cut_on == cut_type::TRUE_1muNp && classification_type(spill, &slice) == particle_data::int_type::true_visible_1muNp)
+        
+                slice_value = slice_var(&slice);
+                selected_slices ++ ;
+            } // loop spill->slc
+        
+            if (selected_slices > 1) 
+                logger::log(level_t::error) << "Something wrong with run:event = " 
+                                            << run(spill) << ":" << event(spill) 
+                                            << " => found " << selected_slices
+                                            << " slice(s) 1µNp"
+                                            << std::endl;
+            return slice_value;
+        });
+    }
 
     chi2 chi2_ALG (std::vector<double> &dEdx, std::vector<double> &RR, double rr_min, double rr_max) {
         /* The output is chi2s
@@ -348,6 +387,17 @@ namespace var_utils {
         }
         return 9;
     } // int id_pfp
+
+    particle_data::int_type classification_type (const caf::SRSpillProxy *spill, const caf::SRSliceProxy *slice) {
+        /* Utility to help classify different true interaction types
+         *  - 1µNp are particle_data::int_type::true_visible_1muNp
+         *  - 1µ1p are particle_data::int_type::true_visible_1mu1p
+         *  - unclassified
+        */
+
+
+
+    } // int classification_type
 } // namespace var_utils
 
 namespace cuts {
@@ -775,19 +825,38 @@ namespace vars {
             return neutrino_pT_Np (*slice, ipfp_muon, var_utils::dist_cut);
         }); // const ana::Var slice_neutrino_energy_reco_1muNp
 
-        const ana::Var slice_muon_hit_completeness ([](const caf::SRSpillProxy *spill) -> double {
+        const ana::Var slice_muon_hit_completeness ([](const caf::SRSliceProxy *slice) -> double {
             int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
-            return slice.reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_completeness;
+            return slice->reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_completeness;
         }); // const ana::Var slice_muon_hit_completeness
 
-        const ana::Var slice_muon_hit_purity ([](const caf::SRSpillProxy *spill) -> double {
+        const ana::Var slice_muon_hit_purity ([](const caf::SRSliceProxy *slice) -> double {
             int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
-            return slice.reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_purity;
+            return slice->reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_purity;
         }); // const ana::Var slice_muon_hit_completeness
+
+        const ana::Var slice_vertex_difference ([](const caf::SRSliceProxy *slice) -> double {
+
+            if (
+                std::isnan(slice->vertex.x) &&
+                std::isnan(slice->vertex.y) &&
+                std::isnan(slice->vertex.z) &&
+                std::isnan(slice->truth.position.x) &&
+                std::isnan(slice->truth.position.y) &&
+                std::isnan(slice->truth.position.z) 
+            ) return -1; 
+
+            return std::sqrt(
+                std::pow(slice->vertex.x - slice->truth.position.x, 2) + 
+                std::pow(slice->vertex.y - slice->truth.position.y, 2) + 
+                std::pow(slice->vertex.z - slice->truth.position.z, 2)
+            );
+
+        });
     } // namespace reco
 } // namespace vars
 
