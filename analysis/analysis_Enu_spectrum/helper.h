@@ -3,7 +3,6 @@
 
 #include "sbnana/CAFAna/Core/SpectrumLoader.h"
 #include "sbnana/CAFAna/Core/Spectrum.h"
-#include "sbnana/CAFAna/Core/Tree.h"
 #include "sbnana/CAFAna/Core/Binning.h"
 #include "sbnana/CAFAna/Core/Cut.h"
 #include "sbnana/CAFAna/Core/Utilities.h"

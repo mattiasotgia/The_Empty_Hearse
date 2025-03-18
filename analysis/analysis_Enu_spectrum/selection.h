@@ -608,6 +608,26 @@ namespace cuts {
                 slice->barycenterFM.deltaZ_Trigger < var_utils::barycenterFM_deltaZ_Trigger.max && 
                 slice->barycenterFM.deltaZ_Trigger > var_utils::barycenterFM_deltaZ_Trigger.min
             );
+        }); // const ana::Cut slice_barycenter
+
+        const ana::Cut slice_1muNp ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 1) num_protons++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 2) num_pions++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 3) num_showers++;
+            } // loop pfp
+
+            return num_protons > 0 && num_pions == 0 && num_showers == 0;
         });
 
         const ana::SpillCut spill_CRTPMTNeutrino ([](const caf::SRSpillProxy *spill) -> bool {
@@ -648,6 +668,8 @@ namespace vars {
              * Here only the computation should be performed, since the cuts will be applied
              * at the Tree/Spectrum stage
             */
+                
+            if (std::isnan(slice->truth.E)) return -1;
             return slice->truth.E; // true neutrino energy in GeV
         });
     } // namespace truth
@@ -728,7 +750,15 @@ namespace vars {
             */
             
             int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
-            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+            if (ipfp_muon == -1) {
+                std::cout << "Did not find any µ" << std::endl;
+                return -1; // negative energy backed up by cut
+            }
+
+            if(std::isnan(neutrino_energy_Np (*slice, ipfp_muon, var_utils::dist_cut))) {
+                std::cout << "Neutrino energy is nan" << std::endl;
+                return -1;
+            }
 
             return neutrino_energy_Np (*slice, ipfp_muon, var_utils::dist_cut);
         }); // const ana::Var slice_neutrino_energy_reco_1muNp
@@ -744,6 +774,20 @@ namespace vars {
 
             return neutrino_pT_Np (*slice, ipfp_muon, var_utils::dist_cut);
         }); // const ana::Var slice_neutrino_energy_reco_1muNp
+
+        const ana::Var slice_muon_hit_completeness ([](const caf::SRSpillProxy *spill) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice.reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_completeness;
+        }); // const ana::Var slice_muon_hit_completeness
+
+        const ana::Var slice_muon_hit_purity ([](const caf::SRSpillProxy *spill) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice.reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_purity;
+        }); // const ana::Var slice_muon_hit_completeness
     } // namespace reco
 } // namespace vars
 
