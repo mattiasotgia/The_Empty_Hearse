@@ -10,12 +10,12 @@
 const ana::Cut def_cut = (
     // ana::kNoCut
     // cuts::reco::slice_1muNp             &&
-    // cuts::reco::slice_at_least_mu       &&
-    // cuts::reco::slice_vtx_in_FV         &&
-    // cuts::reco::slice_mu_50_length      &&
-    // cuts::reco::slice_mu_in_contained   &&
-    // cuts::reco::slice_mu_not_crossing   &&
-    // cuts::reco::slice_barycenter        &&
+    cuts::reco::slice_at_least_mu       &&
+    cuts::reco::slice_vtx_in_FV         &&
+    cuts::reco::slice_mu_50_length      &&
+    cuts::reco::slice_mu_in_contained   &&
+    cuts::reco::slice_mu_not_crossing   &&
+    cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
 );
 
@@ -24,7 +24,7 @@ const ana::Cut def_cut_truth = (
     cuts::truth::slice_vtx_in_FV
 );
 
-const var_utils::cut_type local_cut_type = var_utils::cut_type::BOTH_1muNp;
+const var_utils::cut_type local_cut_type = var_utils::cut_type::TRUE_1muNp;
 
 using level_t = logger::level;
 
@@ -155,11 +155,12 @@ void reco_1muNp() {
     )); 
     loader_non_cheated.Go();
 
-    std::unique_ptr<TFile> file(new TFile("reco1muNp_alldata.root", "RECREATE"));
+    std::unique_ptr<TFile> file(new TFile("reco1muNp_checks.root", "RECREATE"));
     std::cout << "__ WRITING :     cheated __ " << std::endl;
     cheated->SaveTo(file->mkdir("cheated"));
     cheated_checks->SaveTo(file->mkdir("cheated_checks"));
     std::cout << "__ WRITING : non cheated __ " << std::endl;
+    non_cheated->SaveTo(file->mkdir("non_cheated"));
     non_cheated_checks->SaveTo(file->mkdir("non_cheated_checks"));
 };
 

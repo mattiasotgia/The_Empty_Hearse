@@ -974,7 +974,7 @@ namespace vars {
                 if (slice->reco.pfp[ipfp].trk.truth.p.length>length)
                     length = slice->reco.pfp[ipfp].trk.truth.p.length;
             } // pfp loops
-            
+
             return length;
         }); // const ana::Var slice_pid_muon_true_length
 
@@ -988,6 +988,8 @@ namespace vars {
                     ipfp_proton = ipfp;
                 }
             } // pfp loops
+
+            if (ipfp_proton == -1) return -5;
             return slice->reco.pfp[ipfp_proton].trk.truth.bestmatch.hit_completeness;
         }); // const ana::Var slice_proton_hit_completeness
 
@@ -1001,6 +1003,8 @@ namespace vars {
                     ipfp_proton = ipfp;
                 }
             } // pfp loops
+
+            if (ipfp_proton == -1) return -5;
             return slice->reco.pfp[ipfp_proton].trk.truth.bestmatch.hit_purity;
         }); // const ana::Var slice_proton_hit_purity
 
@@ -1021,6 +1025,8 @@ namespace vars {
                     ipfp_proton = ipfp;
                 }
             } // pfp loops
+
+            if (ipfp_proton == -1) return -5;
             return slice->reco.pfp[ipfp_proton].trk.rangeP.p_proton;
         }); // const ana::Var slice_proton_hit_purity
 
