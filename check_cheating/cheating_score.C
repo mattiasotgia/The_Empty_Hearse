@@ -35,8 +35,11 @@ void cheating_score() {
     // ana::SpectrumLoader loader10evt_noSAM_nocheat("/exp/icarus/data/users/msotgia/thesis/stage1_runs_single/50evt_tests/test_4_jobsub/stage1_no_cheat_essential_50.flat.caf.root");
     // ana::SpectrumLoader dataloader_cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_stage1tocaf_flatcafs");
     // ana::SpectrumLoader dataloader_non_cheated("msotgia_v09_89_01_01p03_BNB_production_non_cheated_stage1tocaf_flatcafs");
-    ana::SpectrumLoader loader2evt_noSAM_fullcheat("/exp/icarus/data/users/msotgia/thesis/stage1_runs_single/single_1muNp_stages1tocafs/stage1_cheat_essential.flat.caf.root");
-    ana::SpectrumLoader loader2evt_noSAM_nocheat("/exp/icarus/data/users/msotgia/thesis/stage1_runs_single/single_1muNp_stages1tocafs/stage1_no_cheat_essential.flat.caf.root");
+    // ana::SpectrumLoader loader2evt_noSAM_fullcheat("/exp/icarus/data/users/msotgia/thesis/stage1_runs_single/single_1muNp_stages1tocafs/stage1_cheat_essential.flat.caf.root");
+    // ana::SpectrumLoader loader2evt_noSAM_nocheat("/exp/icarus/data/users/msotgia/thesis/stage1_runs_single/single_1muNp_stages1tocafs/stage1_no_cheat_essential.flat.caf.root");
+
+    ana::SpectrumLoader dataloader_cheate("");
+    ana::SpectrumLoader dataloader_non_cheated("");
 
     
     std::vector<plot1D<ana::MultiVar>> plots = {
