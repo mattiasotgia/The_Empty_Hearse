@@ -67,7 +67,9 @@ namespace var_utils {
         TRUE_1muNp,
         TRUE_1mu1p,
         BOTH_1muNp,
-        BOTH_1mu1p
+        BOTH_1mu1p,
+        MC_1muNp,
+        MC_1mu1p
     };
 
     particle_data::int_type classification_type (const caf::SRSpillProxy*, const caf::SRSliceProxy*);
@@ -76,12 +78,24 @@ namespace var_utils {
         const ana::Cut &reco_cut = ana::kNoCut,  
         cut_type what_to_cut_on = cut_type::RECO, 
         const ana::Cut &truth_cut = ana::kNoCut,
-        std::function<particle_data::int_type(const caf::SRSpillProxy*, const caf::SRSliceProxy*)> classification = classification_type
+        std::function<particle_data::int_type(
+            const caf::SRSpillProxy*, const caf::SRSliceProxy*
+        )> classification = classification_type
     ) {
         return ana::SpillVar([=](const caf::SRSpillProxy *spill) -> double {
             int selected_slices = 0;
-            double slice_value = -1;
+            double slice_value = -9999;
     
+            // if (what_to_cut_on == cut_type::MC_1muNp || what_to_cut_on == cut_type::MC_1mu1p) {
+            //     for (auto const& nu: spill->mc.nu) {
+            //         if (what_to_cut_on == cut_type::MC_1muNp && 
+            //             classification_type_MC(spill, nu) != particle_data::int_type::true_visible_1muNp) continue;
+            //         if (what_to_cut_on == cut_type::MC_1mu1p && 
+            //             classification_type_MC(spill, nu) != particle_data::int_type::true_visible_1mu1p) continue;
+                    
+                    
+            //     } // loop spill->nu
+            // } // MC classification :)
             for (auto const& slice: spill->slc) {
     
                 if (what_to_cut_on == cut_type::RECO && !reco_cut(&slice)) continue; 
@@ -103,7 +117,7 @@ namespace var_utils {
                     classification(spill, &slice) != particle_data::int_type::true_visible_1mu1p
                 ))
                     continue;
-        
+                
                 slice_value = slice_var(&slice);
                 selected_slices ++ ;
             } // loop spill->slc
@@ -810,18 +824,6 @@ namespace cuts {
 } //namespace cuts
 
 namespace vars {
-    namespace truth {
-        const ana::Var slice_neutrino_energy ([](const caf::SRSliceProxy *slice) -> double {
-            /* This slice is the selected slice (so reco 1µNp or truth 1µNp)
-             * Here only the computation should be performed, since the cuts will be applied
-             * at the Tree/Spectrum stage
-            */
-                
-            if (std::isnan(slice->truth.E)) return -1;
-            return slice->truth.E; // true neutrino energy in GeV
-        });
-    } // namespace truth
-
     namespace reco {
         double neutrino_energy_Np (const caf::Proxy<caf::SRSlice> &slice, int ipfp_mu, int dist_emucut) {
             /* Returns the neutrino energy in MeV 
@@ -852,7 +854,10 @@ namespace vars {
                         slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.y, 
                         slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.z
                     );
-                    E_p += std::sqrt(std::pow(particle_data::masses::proton, 2) + std::pow(start_mom.Mag() * 1000, 2)) - particle_data::masses::proton;
+                    E_p += std::sqrt(
+                        std::pow(particle_data::masses::proton, 2) + 
+                        std::pow(start_mom.Mag() * 1000, 2)
+                    ) - particle_data::masses::proton;
                     ipfp_pro = ipfp;
                 } // this pfp is proton-like
             } // loop pfp
@@ -935,7 +940,128 @@ namespace vars {
             if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
             return slice->reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_purity;
-        }); // const ana::Var slice_muon_hit_completeness
+        }); // const ana::Var slice_muon_hit_purity
+        
+        const ana::Var slice_pid_muon_reco_length ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice->reco.pfp[ipfp_muon].trk.len;
+        }); // const ana::Var slice_pid_muon_reco_length
+
+        const ana::Var slice_pid_muon_true_length ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice->reco.pfp[ipfp_muon].trk.truth.p.length;
+        }); // const ana::Var slice_pid_muon_true_length
+
+        const ana::Var slice_pid_proton_reco_length ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length)
+                    length = slice->reco.pfp[ipfp].trk.len;
+            } // pfp loops
+            
+            return length;
+        }); // const ana::Var slice_pid_muon_reco_length
+
+        const ana::Var slice_pid_proton_true_length ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.truth.p.length>length)
+                    length = slice->reco.pfp[ipfp].trk.truth.p.length;
+            } // pfp loops
+            
+            return length;
+        }); // const ana::Var slice_pid_muon_true_length
+
+        const ana::Var slice_proton_hit_completeness ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length) {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+            return slice->reco.pfp[ipfp_proton].trk.truth.bestmatch.hit_completeness;
+        }); // const ana::Var slice_proton_hit_completeness
+
+        const ana::Var slice_proton_hit_purity ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length) {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+            return slice->reco.pfp[ipfp_proton].trk.truth.bestmatch.hit_purity;
+        }); // const ana::Var slice_proton_hit_purity
+
+        const ana::Var slice_muon_momentum_rangeP ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon;
+        }); // const ana::Var slice_muon_momentum_rangeP
+
+        const ana::Var slice_proton_momentum_rangeP ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length) {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+            return slice->reco.pfp[ipfp_proton].trk.rangeP.p_proton;
+        }); // const ana::Var slice_proton_hit_purity
+
+        const ana::Var slice_vertex_difference_z ([](const caf::SRSliceProxy *slice) -> double {
+
+            if (
+                std::isnan(slice->vertex.z) &&
+                std::isnan(slice->truth.position.z) 
+            ) return -1; 
+
+            return std::sqrt(
+                std::pow(slice->vertex.z - slice->truth.position.z, 2)
+            );
+
+        }); // const ana::Var slice_vertex_difference_z
+
+        const ana::Var slice_vertex_difference_y ([](const caf::SRSliceProxy *slice) -> double {
+
+            if (
+                std::isnan(slice->vertex.y) &&
+                std::isnan(slice->truth.position.y) 
+            ) return -1; 
+
+            return std::sqrt(
+                std::pow(slice->vertex.y - slice->truth.position.y, 2)
+            );
+
+        }); // const ana::Var slice_vertex_difference_y
+        
+        const ana::Var slice_vertex_difference_x ([](const caf::SRSliceProxy *slice) -> double {
+
+            if (
+                std::isnan(slice->vertex.x) &&
+                std::isnan(slice->truth.position.x) 
+            ) return -1; 
+
+            return std::sqrt(
+                std::pow(slice->vertex.x - slice->truth.position.x, 2)
+            );
+
+        }); // const ana::Var slice_vertex_difference_x
 
         const ana::Var slice_vertex_difference ([](const caf::SRSliceProxy *slice) -> double {
 
@@ -954,8 +1080,39 @@ namespace vars {
                 std::pow(slice->vertex.z - slice->truth.position.z, 2)
             );
 
-        });
+        }); // const ana::Var slice_vertex_difference
     } // namespace reco
+
+    namespace truth {
+        const ana::Var slice_neutrino_energy ([](const caf::SRSliceProxy *slice) -> double {
+            /* This slice is the selected slice (so reco 1µNp or truth 1µNp)
+             * Here only the computation should be performed, since the cuts will be applied
+             * at the Tree/Spectrum stage
+            */
+                
+            if (std::isnan(slice->truth.E)) return -1;
+            return slice->truth.E; // true neutrino energy in GeV
+        }); // const ana::Var slice_neutrino_energy
+
+        const ana::Var slice_neutrino_dE ([](const caf::SRSliceProxy *slice) -> double {
+            
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) {
+                std::cout << "Did not find any µ" << std::endl;
+                return -9999; // negative energy backed up by cut
+            }
+
+            double reco_E = vars::reco::neutrino_energy_Np (*slice, ipfp_muon, var_utils::dist_cut);
+            if(std::isnan(reco_E)) {
+                std::cout << "Neutrino energy is nan" << std::endl;
+                return -9999;
+            }
+
+            if (std::isnan(slice->truth.E)) return -9999;
+
+            return slice->truth.E - reco_E/slice->truth.E;
+        }); // const ana::Var slice_neutrino_dE
+    } // namespace truth
 } // namespace vars
 
 namespace var_utils {
