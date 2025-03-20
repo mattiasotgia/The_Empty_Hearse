@@ -830,8 +830,8 @@ namespace vars {
             */
 
             float p_mu_x = -1, p_mu_y = -1, p_mu_z = -1;
-            float p_p_x = -1, p_p_y = -1, p_p_z = -1;
-            float p_tot_x = -1, p_tot_y = -1, p_tot_z = -1;
+            // float p_p_x = -1, p_p_y = -1, p_p_z = -1;
+            // float p_tot_x = -1, p_tot_y = -1, p_tot_z = -1;
             double E_mu = 0, E_p = 0;
 
             int ipfp_pro = -1;
@@ -935,7 +935,7 @@ namespace vars {
             return slice->reco.pfp[ipfp_muon].trk.truth.bestmatch.hit_completeness;
         }); // const ana::Var slice_muon_hit_completeness
 
-        const ana::Var slice_muon_hit_purity ([](const caf::SRSliceProxy *slice) -> double {
+        const ana::Var slice_muon_hit_purity ([](const caf::SRSliceProxy *slice)    -> double {
             int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
@@ -955,6 +955,13 @@ namespace vars {
 
             return slice->reco.pfp[ipfp_muon].trk.truth.p.length;
         }); // const ana::Var slice_pid_muon_true_length
+
+        const ana::Var slice_pid_muon_L_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice->reco.pfp[ipfp_muon].trk.len / slice->reco.pfp[ipfp_muon].trk.truth.p.length;
+        }); // const ana::Var slice_pid_muon_L_reco_true_ratio
 
         const ana::Var slice_pid_proton_reco_length ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
@@ -977,6 +984,19 @@ namespace vars {
 
             return length;
         }); // const ana::Var slice_pid_muon_true_length
+
+        const ana::Var slice_pid_proton_L_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            double ratio = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length)
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ratio = slice->reco.pfp[ipfp].trk.len / slice->reco.pfp[ipfp].trk.truth.p.length;
+            } // pfp loops
+            
+            return ratio;
+        }); // const ana::Var slice_pid_proton_L_reco_true_ratio
 
         const ana::Var slice_proton_hit_completeness ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
@@ -1028,7 +1048,29 @@ namespace vars {
 
             if (ipfp_proton == -1) return -5;
             return slice->reco.pfp[ipfp_proton].trk.rangeP.p_proton;
-        }); // const ana::Var slice_proton_hit_purity
+        }); // const ana::Var slice_proton_momentum_rangeP
+
+        const ana::Var slice_muon_P_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            return slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon / slice->reco.pfp[ipfp_muon].trk.truth.p.startp;
+        }); // const ana::Var slice_muon_P_reco_true_ratio
+
+        const ana::Var slice_proton_P_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length) {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+
+            if (ipfp_proton == -1) return -5;
+            return slice->reco.pfp[ipfp_proton].trk.rangeP.p_proton / slice->reco.pfp[ipfp_proton].trk.truth.p.startp;
+        }); // const ana::Var slice_proton_P_reco_true_ratio
 
         const ana::Var slice_vertex_difference_z ([](const caf::SRSliceProxy *slice) -> double {
 
@@ -1154,7 +1196,7 @@ namespace var_utils {
             /* Looking at neutral pions: trickier
              * Reject if any of daughter photon is > 25 MeV
             */ 
-            if (std::abs(prim.pdg) == 111 && prim.daughters.size() > 0) {
+            if (std::abs(prim.pdg) == 111 && prim.daughters.size() >= 1) {
                 for (auto const& true_particle: spill->true_particles) {
                     G4ID_parent = true_particle.parent;
 
@@ -1173,7 +1215,7 @@ namespace var_utils {
             } // found muon
             
             if (std::abs(prim.pdg) == 22) {
-                if (prim.daughters.size() > 0) {
+                if (prim.daughters.size() >= 1) {
                     for (auto const& true_particle: spill->true_particles) {
                         G4ID_parent = true_particle.parent;
                         if (G4ID_parent == prim.G4ID)
@@ -1188,7 +1230,7 @@ namespace var_utils {
                 return particle_data::int_type::unclassified;
 
             if (std::abs(prim.pdg) == 2212) {
-                if (prim.daughters.size() > 0) {
+                if (prim.daughters.size() >= 1) {
                     for(auto const& true_particle: spill->true_particles) {
                         G4ID_parent = true_particle.parent;
                         if (G4ID_parent == prim.G4ID) 
@@ -1251,7 +1293,7 @@ namespace var_utils {
             /* Looking at neutral pions: trickier
              * Reject if any of daughter photon is > 25 MeV
             */ 
-            if (std::abs(prim.pdg) == 111 && prim.daughters.size() > 0) {
+            if (std::abs(prim.pdg) == 111 && prim.daughters.size() >= 1) {
                 for (auto const& true_particle: spill->true_particles) {
                     G4ID_parent = true_particle.parent;
 
@@ -1270,7 +1312,7 @@ namespace var_utils {
             } // found muon
             
             if (std::abs(prim.pdg) == 22) {
-                if (prim.daughters.size() > 0) {
+                if (prim.daughters.size() >= 1) {
                     for (auto const& true_particle: spill->true_particles) {
                         G4ID_parent = true_particle.parent;
                         if (G4ID_parent == prim.G4ID)
@@ -1285,7 +1327,7 @@ namespace var_utils {
                 return particle_data::int_type::unclassified;
 
             if (std::abs(prim.pdg) == 2212) {
-                if (prim.daughters.size() > 0) {
+                if (prim.daughters.size() >= 1) {
                     for(auto const& true_particle: spill->true_particles) {
                         G4ID_parent = true_particle.parent;
                         if (G4ID_parent == prim.G4ID) 
