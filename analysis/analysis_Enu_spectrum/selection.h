@@ -1054,7 +1054,12 @@ namespace vars {
             int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
-            return slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon / slice->reco.pfp[ipfp_muon].trk.truth.p.startp;
+            double startp_mag = std::sqrt(
+                std::pow(slice->reco.pfp[ipfp_muon].trk.truth.p.startp.x, 2) + 
+                std::pow(slice->reco.pfp[ipfp_muon].trk.truth.p.startp.y, 2) + 
+                std::pow(slice->reco.pfp[ipfp_muon].trk.truth.p.startp.z, 2)
+            );
+            return slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon / startp_mag;
         }); // const ana::Var slice_muon_P_reco_true_ratio
 
         const ana::Var slice_proton_P_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
@@ -1069,7 +1074,14 @@ namespace vars {
             } // pfp loops
 
             if (ipfp_proton == -1) return -5;
-            return slice->reco.pfp[ipfp_proton].trk.rangeP.p_proton / slice->reco.pfp[ipfp_proton].trk.truth.p.startp;
+
+            double startp_mag = std::sqrt(
+                std::pow(slice->reco.pfp[ipfp_proton].trk.truth.p.startp.x, 2) + 
+                std::pow(slice->reco.pfp[ipfp_proton].trk.truth.p.startp.y, 2) + 
+                std::pow(slice->reco.pfp[ipfp_proton].trk.truth.p.startp.z, 2)
+            );
+
+            return slice->reco.pfp[ipfp_proton].trk.rangeP.p_proton / startp_mag;
         }); // const ana::Var slice_proton_P_reco_true_ratio
 
         const ana::Var slice_vertex_difference_z ([](const caf::SRSliceProxy *slice) -> double {

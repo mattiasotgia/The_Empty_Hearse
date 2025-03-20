@@ -4,6 +4,7 @@
 
 #include "helper.h"
 #include "selection.h"
+#include "selection_nopid.h"
 
 #include "sbnana/CAFAna/Core/Tree.h"
 
@@ -24,7 +25,7 @@ const ana::Cut def_cut_truth = (
     cuts::truth::slice_vtx_in_FV
 );
 
-const var_utils::cut_type local_cut_type = var_utils::cut_type::TRUE_1muNp;
+const var_utils::cut_type local_cut_type = var_utils::cut_type::BOTH_1muNp;
 
 using level_t = logger::level;
 
@@ -49,6 +50,27 @@ const ana::SpillVar spill_pid_proton_reco_L     = var_utils::make_spill_from_sli
 const ana::SpillVar spill_muon_momentum_rangeP  = var_utils::make_spill_from_slice (vars::reco::slice_muon_momentum_rangeP,     def_cut, local_cut_type, def_cut_truth);
 const ana::SpillVar spill_proton_momentum_rangeP= var_utils::make_spill_from_slice (vars::reco::slice_proton_momentum_rangeP,   def_cut, local_cut_type, def_cut_truth);
 
+// NO PID selection (MAIN)
+const ana::SpillVar         nopid_spill_vertex_difference_3D             = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_vertex_delta_3D, def_cut_truth);
+const ana::SpillVar         nopid_spill_vertex_difference_x              = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_vertex_delta_x,  def_cut_truth);
+const ana::SpillVar         nopid_spill_vertex_difference_y              = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_vertex_delta_y,  def_cut_truth);
+const ana::SpillVar         nopid_spill_vertex_difference_z              = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_vertex_delta_z,  def_cut_truth);
+const ana::SpillVar         nopid_spill_muon_hit_purity                 = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_muon_hit_purity, def_cut_truth);
+const ana::SpillVar         nopid_spill_leading_proton_hit_purity       = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_leading_proton_hit_purity, def_cut_truth);
+const ana::SpillMultiVar    nopid_spill_protons_hit_purity              = no_pid::make_spill_from_slice<const ana::SpillMultiVar, std::vector<double>>(no_pid::vars::slice_protons_hit_purity, def_cut_truth);
+const ana::SpillVar         nopid_spill_muon_hit_completeness           = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_muon_hit_completeness, def_cut_truth);
+const ana::SpillVar         nopid_spill_leading_proton_hit_completeness = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_leading_proton_hit_completeness, def_cut_truth);
+const ana::SpillMultiVar    nopid_spill_protons_hit_completeness        = no_pid::make_spill_from_slice<const ana::SpillMultiVar, std::vector<double>>(no_pid::vars::slice_protons_hit_completeness, def_cut_truth);
+const ana::SpillVar         nopid_spill_muon_L_reco_true_ratio           = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_muon_L_reco_true_ratio, def_cut_truth);
+const ana::SpillVar         nopid_spill_leading_proton_L_reco_true_ratio = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_leading_proton_L_reco_true_ratio, def_cut_truth);
+const ana::SpillMultiVar    nopid_spill_protons_L_reco_true_ratio        = no_pid::make_spill_from_slice<const ana::SpillMultiVar, std::vector<double>>(no_pid::vars::slice_protons_L_reco_true_ratio, def_cut_truth);
+const ana::SpillVar         nopid_spill_muon_P_reco_true_ratio           = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_muon_P_reco_true_ratio, def_cut_truth);
+const ana::SpillVar         nopid_spill_leading_proton_P_reco_true_ratio = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_leading_proton_P_reco_true_ratio, def_cut_truth);
+const ana::SpillMultiVar    nopid_spill_protons_P_reco_true_ratio        = no_pid::make_spill_from_slice<const ana::SpillMultiVar, std::vector<double>>(no_pid::vars::slice_protons_P_reco_true_ratio, def_cut_truth);
+const ana::SpillVar         nopid_spill_neutrino_reco_E                 = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_neutrino_reco_E,   def_cut_truth);
+const ana::SpillVar         nopid_spill_neutrino_true_E                 = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_neutrino_true_E,   def_cut_truth);
+const ana::SpillVar         nopid_spill_neutrino_reco_dE                = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_neutrino_reco_dE,  def_cut_truth);
+const ana::SpillVar         nopid_spill_neutrino_reco_pT                = no_pid::make_spill_from_slice<const ana::SpillVar, double>(no_pid::vars::slice_neutrino_reco_pT,  def_cut_truth);
 
 void reco_1muNp() {
     
@@ -104,6 +126,56 @@ void reco_1muNp() {
         }, 
         cheating::cut_bad_events
     )); 
+    
+    std::unique_ptr<ana::Tree> cheated_nopid_checks(new ana::Tree(
+        "cheated_nopid_checks",
+        {
+            "vertex_difference_3D",
+            "vertex_difference_x",
+            "vertex_difference_y",
+            "vertex_difference_z",
+            "muon_hit_purity",
+            "leading_proton_hit_purity",
+            // "protons_hit_purity",
+            "muon_hit_completeness",
+            "leading_proton_hit_completeness",
+            // "protons_hit_completeness",
+            "muon_L_reco_true_ratio",
+            "leading_proton_L_reco_true_ratio",
+            // "protons_L_reco_true_ratio",
+            "muon_P_reco_true_ratio",
+            "leading_proton_P_reco_true_ratio",
+            // "protons_P_reco_true_ratio",
+            "neutrino_reco_E",
+            "neutrino_true_E",
+            "neutrino_reco_dE",
+            "neutrino_reco_pT"
+        }, 
+        loader_cheated,
+        {
+            nopid_spill_vertex_difference_3D,
+            nopid_spill_vertex_difference_x,
+            nopid_spill_vertex_difference_y,
+            nopid_spill_vertex_difference_z,
+            nopid_spill_muon_hit_purity,
+            nopid_spill_leading_proton_hit_purity,
+            // nopid_spill_protons_hit_purity,
+            nopid_spill_muon_hit_completeness,
+            nopid_spill_leading_proton_hit_completeness,
+            // nopid_spill_protons_hit_completeness,
+            nopid_spill_muon_L_reco_true_ratio,
+            nopid_spill_leading_proton_L_reco_true_ratio,
+            // nopid_spill_protons_L_reco_true_ratio,
+            nopid_spill_muon_P_reco_true_ratio,
+            nopid_spill_leading_proton_P_reco_true_ratio,
+            // nopid_spill_protons_P_reco_true_ratio,
+            nopid_spill_neutrino_reco_E,
+            nopid_spill_neutrino_true_E,
+            nopid_spill_neutrino_reco_dE,
+            nopid_spill_neutrino_reco_pT
+        },
+        cheating::cut_bad_events && cuts::truth::spill_1muNp_MC && cuts::truth::spill_sliceless
+    ));
     loader_cheated.Go();
     
     // ana::SpectrumLoader loader_non_cheated("/exp/icarus/data/users/msotgia/thesis/cheating-tests/test-slice0-problem/caf/stage1_no_cheat.flat.caf.root");
@@ -153,15 +225,67 @@ void reco_1muNp() {
         }, 
         cheating::cut_bad_events
     )); 
+
+    std::unique_ptr<ana::Tree> non_cheated_nopid_checks(new ana::Tree(
+        "non_cheated_nopid_checks",
+        {
+            "vertex_difference_3D",
+            "vertex_difference_x",
+            "vertex_difference_y",
+            "vertex_difference_z",
+            "muon_hit_purity",
+            "leading_proton_hit_purity",
+            // "protons_hit_purity",
+            "muon_hit_completeness",
+            "leading_proton_hit_completeness",
+            // "protons_hit_completeness",
+            "muon_L_reco_true_ratio",
+            "leading_proton_L_reco_true_ratio",
+            // "protons_L_reco_true_ratio",
+            "muon_P_reco_true_ratio",
+            "leading_proton_P_reco_true_ratio",
+            // "protons_P_reco_true_ratio",
+            "neutrino_reco_E",
+            "neutrino_true_E",
+            "neutrino_reco_dE",
+            "neutrino_reco_pT"
+        }, 
+        loader_non_cheated,
+        {
+            nopid_spill_vertex_difference_3D,
+            nopid_spill_vertex_difference_x,
+            nopid_spill_vertex_difference_y,
+            nopid_spill_vertex_difference_z,
+            nopid_spill_muon_hit_purity,
+            nopid_spill_leading_proton_hit_purity,
+            // nopid_spill_protons_hit_purity,
+            nopid_spill_muon_hit_completeness,
+            nopid_spill_leading_proton_hit_completeness,
+            // nopid_spill_protons_hit_completeness,
+            nopid_spill_muon_L_reco_true_ratio,
+            nopid_spill_leading_proton_L_reco_true_ratio,
+            // nopid_spill_protons_L_reco_true_ratio,
+            nopid_spill_muon_P_reco_true_ratio,
+            nopid_spill_leading_proton_P_reco_true_ratio,
+            // nopid_spill_protons_P_reco_true_ratio,
+            nopid_spill_neutrino_reco_E,
+            nopid_spill_neutrino_true_E,
+            nopid_spill_neutrino_reco_dE,
+            nopid_spill_neutrino_reco_pT
+        },
+        cheating::cut_bad_events && cuts::truth::spill_1muNp_MC && cuts::truth::spill_sliceless
+    ));
     loader_non_cheated.Go();
 
-    std::unique_ptr<TFile> file(new TFile("reco1muNp_checks.root", "RECREATE"));
+    std::unique_ptr<TFile> file_reco_1muNp(new TFile("reco1muNp_checks.root", "RECREATE"));
     std::cout << "__ WRITING :     cheated __ " << std::endl;
-    cheated->SaveTo(file->mkdir("cheated"));
-    cheated_checks->SaveTo(file->mkdir("cheated_checks"));
+    cheated->SaveTo(file_reco_1muNp->mkdir("cheated"));
+    cheated_checks->SaveTo(file_reco_1muNp->GetDirectory("cheated"));
+    cheated_nopid_checks->SaveTo(file_reco_1muNp->mkdir("cheated_nopid"));
     std::cout << "__ WRITING : non cheated __ " << std::endl;
-    non_cheated->SaveTo(file->mkdir("non_cheated"));
-    non_cheated_checks->SaveTo(file->mkdir("non_cheated_checks"));
+    non_cheated->SaveTo(file_reco_1muNp->mkdir("non_cheated"));
+    cheated_checks->SaveTo(file_reco_1muNp->GetDirectory("non_cheated"));
+    non_cheated_nopid_checks->SaveTo(file_reco_1muNp->mkdir("non_cheated_nopid"));
 };
 
-#endif
+#endif 
