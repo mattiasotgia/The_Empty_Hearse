@@ -12,6 +12,8 @@
 #include "sbnanaobj/StandardRecord/Proxy/SRProxy.h"
 #include "sbnanaobj/StandardRecord/StandardRecord.h"
 
+#include "TProfile.h"
+
 #include <vector>     
 #include <tuple>
 #include <set>
@@ -113,110 +115,238 @@ namespace hard_code {
 } // namespace hard_code
 
 namespace cheating {
-    using level_t = logger::level;
- 
-    // 
-    // Definition of a chi2 statistics to test the cheat level (of the reconstruction goodness)
-    template<class T>
-    const T chi2(T __a, T __b, std::string label = "undef") {
-        double chi2 = 0; // default "as if truthmatched";
-        if (__b == 0 ) {
-            if (__a == __b) {
-                logger::log(level_t::warning) << "Found truth value zero (checking label " 
-                                              << label << "), but reco == truth, so this will be ignored"
-                                              << std::endl;
-                return chi2;
-            } else {
-                logger::log(level_t::warning) << "Found truth value zero (checking label " 
-                                              << label << "), but reco != truth, so returning their difference squared..."
-                                              << std::endl;
-                return std::pow(std::abs(__a - __b), 2);
+
+    struct chi2
+    {
+        double muon;
+        double proton;
+        double kaon;
+        double pi;
+    }; 
+
+    struct values_minmax {
+        double min;
+        double max;
+    }; 
+
+    double dist_cut = 10.;
+    values_minmax barycenterFM_deltaZ_Trigger = {0., 100.};
+
+    std::string dEdx_temp = 
+        "/exp/icarus/app/users/msotgia/analysis/sbnana_v09_93_01_thesis_analysis/analysis/dEdxrestemplates.root";
+    TFile* file = TFile::Open(dEdx_temp.c_str());
+
+    auto dedx_range_pro = (TProfile *)file->Get("dedx_range_pro");
+    auto dedx_range_ka  = (TProfile *)file->Get("dedx_range_ka");
+    auto dedx_range_pi  = (TProfile *)file->Get("dedx_range_pi");
+    auto dedx_range_mu  = (TProfile *)file->Get("dedx_range_mu");
+
+    chi2 chi2_ALG (std::vector<double> &dEdx, std::vector<double> &RR, double rr_min, double rr_max) {
+        /* The output is chi2s
+         * Those are used to classify final state particles 
+        */
+
+        double threshold = 0.5;
+        double max_rr = rr_max; // Max value for the residual range (RR)
+        double min_rr = rr_min; // Min value for the residual range (RR)
+
+        std::vector<float> trkdedx;
+        std::vector<float> trkres;
+        std::vector<double> vpida;
+
+        for (std::size_t i(0); i < dEdx.size(); ++i) {
+            if (i == 0 || i == dEdx.size() - 1)
+                continue;
+            if (RR[i] < max_rr && RR[i] > rr_min) {
+                trkdedx.push_back(dEdx[i]);
+                trkres.push_back(RR[i]);
             }
         }
-        chi2 = std::pow(std::abs(__a - __b)/(double)__b, 2);
-        logger::log(level_t::info) << label << " chi2: " << chi2 << "(__a = " << __a << "; __b = " << __b << ")" << std::endl;
-        return chi2;
-    };
 
+        int npt = 0;
+        double chi2pro = 0;
+        double chi2ka = 0;
+        double chi2pi = 0;
+        double chi2mu = 0;
+        double avgdedx = 0;
+        double PIDA = 0;
 
-    // The idea is to build a strong estimate (chi2-like) to test the goodness of 
-    // this cheating... This is integrated over all the variables
-    // At the moment the only possibility is ( V_reco - V_truth ) / V_truth
-    // Minimal selection applied: iscc + pdg == 14 + event is not in the bad_list...
-    const ana::MultiVar score ([](const caf::SRSliceProxy *slice) -> std::vector<double> {
-
-        std::vector<double> score;
-
-        score.push_back(chi2<double>(slice->vertex.x, slice->truth.position.x, "vertex_position"));
-        score.push_back(chi2<double>(slice->vertex.y, slice->truth.position.y, "vertex_position"));
-        score.push_back(chi2<double>(slice->vertex.z, slice->truth.position.z, "vertex_position"));
-
-        // recob::PFParticle and other stuff
-        for (auto const &pfp: slice->reco.pfp) {
-            if (utils::is_true_track(pfp) == -1) continue;
-
-            bool is_track = utils::is_true_track(pfp);
-
-            // Track score as additional score value...
-            // score.push_back(chi2<double>(pfp.trackScore, is_track ? 1 : 0, "track_score"));
-            
-            if (is_track) {
-                score.push_back(chi2<double>(pfp.trk.truth.bestmatch.hit_completeness, 1, "hit_completeness"));
-                score.push_back(chi2<double>(pfp.trk.truth.bestmatch.hit_purity, 1, "hit_purity"));
-
-                score.push_back(chi2<double>(pfp.trk.start.x, pfp.trk.truth.p.start.x, "track_start_point"));
-                score.push_back(chi2<double>(pfp.trk.start.y, pfp.trk.truth.p.start.y, "track_start_point"));
-                score.push_back(chi2<double>(pfp.trk.start.z, pfp.trk.truth.p.start.z, "track_start_point"));
-
-                score.push_back(chi2<double>(pfp.trk.end.x, pfp.trk.truth.p.end.x, "track_end_point"));
-                score.push_back(chi2<double>(pfp.trk.end.y, pfp.trk.truth.p.end.y, "track_end_point"));
-                score.push_back(chi2<double>(pfp.trk.end.z, pfp.trk.truth.p.end.z, "track_end_point")); 
-
-                score.push_back(chi2<double>(pfp.trk.len, pfp.trk.truth.p.length, "track_lenght"));
-
-                score.push_back(chi2<double>(
-                    slice->vertex.x-pfp.trk.start.x, 
-                    slice->truth.position.x-pfp.trk.truth.p.start.x, "vertex_start_position"
-                ));
-                score.push_back(chi2<double>(
-                    slice->vertex.y-pfp.trk.start.y, 
-                    slice->truth.position.y-pfp.trk.truth.p.start.y, "vertex_start_position"
-                ));
-                score.push_back(chi2<double>(
-                    slice->vertex.z-pfp.trk.start.z, 
-                    slice->truth.position.z-pfp.trk.truth.p.start.z, "vertex_start_position"
-                ));
-            } else {
-                score.push_back(chi2<double>(pfp.shw.truth.bestmatch.hit_completeness, 1));
-                score.push_back(chi2<double>(pfp.shw.truth.bestmatch.hit_purity, 1));
-
-                score.push_back(chi2<double>(pfp.shw.start.x, pfp.shw.truth.p.start.x, "shower_start_point"));
-                score.push_back(chi2<double>(pfp.shw.start.y, pfp.shw.truth.p.start.y, "shower_start_point"));
-                score.push_back(chi2<double>(pfp.shw.start.z, pfp.shw.truth.p.start.z, "shower_start_point"));
-
-                score.push_back(chi2<double>(pfp.shw.end.x, pfp.shw.truth.p.end.x, "shower_end_point"));
-                score.push_back(chi2<double>(pfp.shw.end.y, pfp.shw.truth.p.end.y, "shower_end_point"));
-                score.push_back(chi2<double>(pfp.shw.end.z, pfp.shw.truth.p.end.z, "shower_end_point")); 
-                
-                score.push_back(chi2<double>(pfp.shw.len, pfp.shw.truth.p.length, "shower_lenght"));
-
-                score.push_back(chi2<double>(
-                    slice->vertex.x-pfp.shw.start.x,
-                    slice->truth.position.x-pfp.shw.truth.p.start.x, "vertex_start_position"
-                ));
-                score.push_back(chi2<double>(
-                    slice->vertex.y-pfp.shw.start.y,
-                    slice->truth.position.y-pfp.shw.truth.p.start.y, "vertex_start_position"
-                ));
-                score.push_back(chi2<double>(
-                    slice->vertex.z-pfp.shw.start.z,
-                    slice->truth.position.z-pfp.shw.truth.p.start.z, "vertex_start_position"
-                ));
+        int used_trkres = 0;
+        for (unsigned i = 0; i < trkdedx.size(); ++i) { 
+            // hits
+            // ignore the first and the last point
+            // if (i == 0 || i == trkdedx.size() - 1) continue;
+            avgdedx += trkdedx[i];
+            if (trkres[i] < 26) {
+                PIDA += trkdedx[i] * std::pow(trkres[i], 0.42);
+                vpida.push_back(trkdedx[i] * std::pow(trkres[i], 0.42));
+                used_trkres++;
             }
+            if (trkdedx[i] > 100 || trkdedx[i] < threshold)
+                continue; // protect against large pulse height
+            
+            int bin = dedx_range_pro->FindBin(trkres[i]);
+            if (bin >= 1 && bin <= dedx_range_pro->GetNbinsX()) {
+                
+                double bincpro = dedx_range_pro->GetBinContent(bin);
+                if (bincpro < 1e-6)  // for 0 bin content, using neighboring bins
+                    bincpro = 
+                        (dedx_range_pro->GetBinContent(bin - 1) + dedx_range_pro->GetBinContent(bin + 1)) / 2;
+                
+                double bincka = dedx_range_ka->GetBinContent(bin);
+                if (bincka < 1e-6)
+                    bincka =
+                        (dedx_range_ka->GetBinContent(bin - 1) + dedx_range_ka->GetBinContent(bin + 1)) / 2;
 
-        } // loop pfp
-        return score;
-    }); // score ana::MultiVar
+                double bincpi = dedx_range_pi->GetBinContent(bin);
+                if (bincpi < 1e-6)
+                    bincpi =
+                        (dedx_range_pi->GetBinContent(bin - 1) + dedx_range_pi->GetBinContent(bin + 1)) / 2;
+                
+                double bincmu = dedx_range_mu->GetBinContent(bin);
+                if (bincmu < 1e-6)
+                    bincmu =
+                        (dedx_range_mu->GetBinContent(bin - 1) + dedx_range_mu->GetBinContent(bin + 1)) / 2;
+                
+                double binepro = dedx_range_pro->GetBinError(bin);
+                if (binepro < 1e-6)
+                    binepro =
+                        (dedx_range_pro->GetBinError(bin - 1) + dedx_range_pro->GetBinError(bin + 1)) / 2;
+
+                double bineka = dedx_range_ka->GetBinError(bin);
+                if (bineka < 1e-6)
+                    bineka = (dedx_range_ka->GetBinError(bin - 1) + dedx_range_ka->GetBinError(bin + 1)) / 2;
+
+                double binepi = dedx_range_pi->GetBinError(bin);
+                if (binepi < 1e-6)
+                    binepi = (dedx_range_pi->GetBinError(bin - 1) + dedx_range_pi->GetBinError(bin + 1)) / 2;
+
+                double binemu = dedx_range_mu->GetBinError(bin);
+                if (binemu < 1e-6)
+                    binemu = (dedx_range_mu->GetBinError(bin - 1) + dedx_range_mu->GetBinError(bin + 1)) / 2;
+
+                // double errke = 0.05*trkdedx[i];   //5% KE resolution
+
+                double errdedx = 0.04231 + 0.0001783 * trkdedx[i] * trkdedx[i]; // resolution on dE/dx
+                
+                errdedx *= trkdedx[i];
+                
+                chi2pro += std::pow((trkdedx[i] - bincpro) / std::sqrt(std::pow(binepro, 2) + std::pow(errdedx, 2)), 2);
+                chi2ka  += std::pow((trkdedx[i] - bincka)  / std::sqrt(std::pow(bineka, 2)  + std::pow(errdedx, 2)), 2);
+                chi2pi  += std::pow((trkdedx[i] - bincpi)  / std::sqrt(std::pow(binepi, 2)  + std::pow(errdedx, 2)), 2);
+                chi2mu  += std::pow((trkdedx[i] - bincmu)  / std::sqrt(std::pow(binemu, 2)  + std::pow(errdedx, 2)), 2);
+                // std::cout<<i<<" "<<trkdedx[i]<<" "<<trkres[i]<<" "<<bincpro<<std::endl;
+                ++npt;
+            }
+        } // hits
+
+        return {chi2mu / npt, chi2pro / npt, chi2ka / npt, chi2pi / npt};
+    } // chi2 chi2_ALG
+
+    using level_t = logger::level;
+ 
+    // // 
+    // // Definition of a chi2 statistics to test the cheat level (of the reconstruction goodness)
+    // template<class T>
+    // const T chi2(T __a, T __b, std::string label = "undef") {
+    //     double chi2 = 0; // default "as if truthmatched";
+    //     if (__b == 0 ) {
+    //         if (__a == __b) {
+    //             logger::log(level_t::warning) << "Found truth value zero (checking label " 
+    //                                           << label << "), but reco == truth, so this will be ignored"
+    //                                           << std::endl;
+    //             return chi2;
+    //         } else {
+    //             logger::log(level_t::warning) << "Found truth value zero (checking label " 
+    //                                           << label << "), but reco != truth, so returning their difference squared..."
+    //                                           << std::endl;
+    //             return std::pow(std::abs(__a - __b), 2);
+    //         }
+    //     }
+    //     chi2 = std::pow(std::abs(__a - __b)/(double)__b, 2);
+    //     logger::log(level_t::info) << label << " chi2: " << chi2 << "(__a = " << __a << "; __b = " << __b << ")" << std::endl;
+    //     return chi2;
+    // };
+
+
+    // // The idea is to build a strong estimate (chi2-like) to test the goodness of 
+    // // this cheating... This is integrated over all the variables
+    // // At the moment the only possibility is ( V_reco - V_truth ) / V_truth
+    // // Minimal selection applied: iscc + pdg == 14 + event is not in the bad_list...
+    // const ana::MultiVar score ([](const caf::SRSliceProxy *slice) -> std::vector<double> {
+
+    //     std::vector<double> score;
+
+    //     score.push_back(chi2<double>(slice->vertex.x, slice->truth.position.x, "vertex_position"));
+    //     score.push_back(chi2<double>(slice->vertex.y, slice->truth.position.y, "vertex_position"));
+    //     score.push_back(chi2<double>(slice->vertex.z, slice->truth.position.z, "vertex_position"));
+
+    //     // recob::PFParticle and other stuff
+    //     for (auto const &pfp: slice->reco.pfp) {
+    //         if (utils::is_true_track(pfp) == -1) continue;
+
+    //         bool is_track = utils::is_true_track(pfp);
+
+    //         // Track score as additional score value...
+    //         // score.push_back(chi2<double>(pfp.trackScore, is_track ? 1 : 0, "track_score"));
+            
+    //         if (is_track) {
+    //             score.push_back(chi2<double>(pfp.trk.truth.bestmatch.hit_completeness, 1, "hit_completeness"));
+    //             score.push_back(chi2<double>(pfp.trk.truth.bestmatch.hit_purity, 1, "hit_purity"));
+
+    //             score.push_back(chi2<double>(pfp.trk.start.x, pfp.trk.truth.p.start.x, "track_start_point"));
+    //             score.push_back(chi2<double>(pfp.trk.start.y, pfp.trk.truth.p.start.y, "track_start_point"));
+    //             score.push_back(chi2<double>(pfp.trk.start.z, pfp.trk.truth.p.start.z, "track_start_point"));
+
+    //             score.push_back(chi2<double>(pfp.trk.end.x, pfp.trk.truth.p.end.x, "track_end_point"));
+    //             score.push_back(chi2<double>(pfp.trk.end.y, pfp.trk.truth.p.end.y, "track_end_point"));
+    //             score.push_back(chi2<double>(pfp.trk.end.z, pfp.trk.truth.p.end.z, "track_end_point")); 
+
+    //             score.push_back(chi2<double>(pfp.trk.len, pfp.trk.truth.p.length, "track_lenght"));
+
+    //             score.push_back(chi2<double>(
+    //                 slice->vertex.x-pfp.trk.start.x, 
+    //                 slice->truth.position.x-pfp.trk.truth.p.start.x, "vertex_start_position"
+    //             ));
+    //             score.push_back(chi2<double>(
+    //                 slice->vertex.y-pfp.trk.start.y, 
+    //                 slice->truth.position.y-pfp.trk.truth.p.start.y, "vertex_start_position"
+    //             ));
+    //             score.push_back(chi2<double>(
+    //                 slice->vertex.z-pfp.trk.start.z, 
+    //                 slice->truth.position.z-pfp.trk.truth.p.start.z, "vertex_start_position"
+    //             ));
+    //         } else {
+    //             score.push_back(chi2<double>(pfp.shw.truth.bestmatch.hit_completeness, 1));
+    //             score.push_back(chi2<double>(pfp.shw.truth.bestmatch.hit_purity, 1));
+
+    //             score.push_back(chi2<double>(pfp.shw.start.x, pfp.shw.truth.p.start.x, "shower_start_point"));
+    //             score.push_back(chi2<double>(pfp.shw.start.y, pfp.shw.truth.p.start.y, "shower_start_point"));
+    //             score.push_back(chi2<double>(pfp.shw.start.z, pfp.shw.truth.p.start.z, "shower_start_point"));
+
+    //             score.push_back(chi2<double>(pfp.shw.end.x, pfp.shw.truth.p.end.x, "shower_end_point"));
+    //             score.push_back(chi2<double>(pfp.shw.end.y, pfp.shw.truth.p.end.y, "shower_end_point"));
+    //             score.push_back(chi2<double>(pfp.shw.end.z, pfp.shw.truth.p.end.z, "shower_end_point")); 
+                
+    //             score.push_back(chi2<double>(pfp.shw.len, pfp.shw.truth.p.length, "shower_lenght"));
+
+    //             score.push_back(chi2<double>(
+    //                 slice->vertex.x-pfp.shw.start.x,
+    //                 slice->truth.position.x-pfp.shw.truth.p.start.x, "vertex_start_position"
+    //             ));
+    //             score.push_back(chi2<double>(
+    //                 slice->vertex.y-pfp.shw.start.y,
+    //                 slice->truth.position.y-pfp.shw.truth.p.start.y, "vertex_start_position"
+    //             ));
+    //             score.push_back(chi2<double>(
+    //                 slice->vertex.z-pfp.shw.start.z,
+    //                 slice->truth.position.z-pfp.shw.truth.p.start.z, "vertex_start_position"
+    //             ));
+    //         }
+
+    //     } // loop pfp
+    //     return score;
+    // }); // score ana::MultiVar
 
     std::map<bool, std::string> boolean_print = {
         {true, "true"},
@@ -298,12 +428,27 @@ namespace cheating {
             int ipfp = 0;
             for (auto const& pfp: slice.reco.pfp) {
 
+                // compute new chi2
+                std::vector<double> dedx;
+                std::vector<double> rr;
+                int use_plane = 2;
+                for (std::size_t ihit = 0; ihit < pfp.trk.calo[use_plane].points.size(); ++ihit) {
+                    dedx.push_back(pfp.trk.calo[use_plane].points[ihit].dedx);
+                    rr.push_back(pfp.trk.calo[use_plane].points[ihit].rr);
+                } // calo points
+
+                // input to chi2_ALG vector dedx, vector rr, rr_min, rr_max
+                // output chi2s {chi2mu/npt,chi2pro/npt,chi2ka/npt,chi2pi/npt}
+                chi2 chi2_values = chi2_ALG(dedx, rr, 0.0, 25.0);
                 
                 std::cout << "[ipfp = " << ipfp << "] --> " 
                           << "ID = " << pfp.id << ", "
                           << "parent = " << pfp.parent << ", "
                           << "parent_is_primary = " << boolean_print[pfp.parent_is_primary] << ", "
                           << "trackScore = " << pfp.trackScore << ", "
+                          << "(for checking purpouses, .pfochar.vtxdist = " << pfp.pfochar.vtxdist << "), "
+                          << " chi2 (proton hypotesis) = " << chi2_values.proton << ", "
+                          << " chi2 (muon hypotesis) = " << chi2_values.muon << ", "
                           << "slcID = " << pfp.slcID << std::endl;
                 
                 if (pfp.parent == -1) continue; // Neutrino PFP :) all other variables are empty

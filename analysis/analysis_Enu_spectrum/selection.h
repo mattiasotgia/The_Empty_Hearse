@@ -64,8 +64,10 @@ namespace var_utils {
 
     enum cut_type {
         RECO,
+        TRUE_1muN1p,
         TRUE_1muNp,
         TRUE_1mu1p,
+        BOTH_1muN1p,
         BOTH_1muNp,
         BOTH_1mu1p,
         MC_1muNp,
@@ -78,6 +80,7 @@ namespace var_utils {
         const ana::Cut &reco_cut = ana::kNoCut,  
         cut_type what_to_cut_on = cut_type::RECO, 
         const ana::Cut &truth_cut = ana::kNoCut,
+        bool info = false, double treshold = 0.25,
         std::function<particle_data::int_type(
             const caf::SRSpillProxy*, const caf::SRSliceProxy*
         )> classification = classification_type
@@ -109,6 +112,11 @@ namespace var_utils {
                     continue;
                 if (what_to_cut_on == cut_type::BOTH_1muNp && (
                     !reco_cut(&slice) || !truth_cut(&slice) || 
+                    classification(spill, &slice) != particle_data::int_type::true_visible_1muNp || classification(spill, &slice) != particle_data::int_type::true_visible_1mu1p
+                ))
+                    continue;
+                if (what_to_cut_on == cut_type::BOTH_1muN1p && (
+                    !reco_cut(&slice) || !truth_cut(&slice) || 
                     classification(spill, &slice) != particle_data::int_type::true_visible_1muNp
                 ))
                     continue;
@@ -119,6 +127,9 @@ namespace var_utils {
                     continue;
                 
                 slice_value = slice_var(&slice);
+                if (slice_value > treshold && info) {
+                    std::cout << "Slice value = " << slice_value << " > " << treshold << " for run.event = " << run(spill) << "." << event(spill) << std::endl;
+                }
                 selected_slices ++ ;
             } // loop spill->slc
         
@@ -691,7 +702,7 @@ namespace cuts {
         }); // const ana::Cut slice_1mu_only
     } // namespace truth
 
-    namespace reco {
+    namespace reco { 
         const ana::Cut slice_at_least_mu ([](const caf::SRSliceProxy *slice) -> bool {
             /* We should at least found one muon, otherwise something bad happens
             */
@@ -789,12 +800,32 @@ namespace cuts {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 3) num_showers++;
             } // loop pfp
 
-            return num_protons > 0 && num_pions == 0 && num_showers == 0;
+            return num_protons > 1 && num_pions == 0 && num_showers == 0;
         });
 
+        const ana::Cut slice_1mu1p ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 1) num_protons++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 2) num_pions++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 3) num_showers++;
+            } // loop pfp
+
+            return num_protons == 1 && num_pions == 0 && num_showers == 0;
+        });
+
+        double flashtime = 0;
         const ana::SpillCut spill_CRTPMTNeutrino ([](const caf::SRSpillProxy *spill) -> bool {
 
-            double flashtime = 0;
             
             for(const auto& crtpmt_match: spill->crtpmt_matches) {
                 //Define the interval depending on Data or MC files
@@ -842,7 +873,7 @@ namespace vars {
             
             double p_mu_tot = std::sqrt(p_mu_x * p_mu_x + p_mu_y * p_mu_y + p_mu_z * p_mu_z); // [GeV]
             
-            E_mu = 1000 * std::sqrt(p_mu_tot * p_mu_tot + std::pow(particle_data::masses::muon, 2) / (1000 * 1000));
+            E_mu = 1000. * std::sqrt(p_mu_tot * p_mu_tot + std::pow(particle_data::masses::muon, 2) / (1000. * 1000.));
 
             for (std::size_t ipfp = 0; ipfp < slice.reco.npfp; ++ipfp) {
                 if (int(ipfp) == ipfp_mu)
@@ -858,11 +889,11 @@ namespace vars {
                         std::pow(particle_data::masses::proton, 2) + 
                         std::pow(start_mom.Mag() * 1000, 2)
                     ) - particle_data::masses::proton;
-                    ipfp_pro = ipfp;
+                    // ipfp_pro = ipfp;
                 } // this pfp is proton-like
             } // loop pfp
 
-            return (E_mu + E_p) / 1000;
+            return (E_mu + E_p) / 1000.;
         } // double neutrino_energy_Np
 
         double neutrino_pT_Np (const caf::Proxy<caf::SRSlice> &islc, int ipfp_mu, int dist_cut) {
@@ -1141,6 +1172,37 @@ namespace vars {
             );
 
         }); // const ana::Var slice_vertex_difference
+
+        const ana::Var slice_muon_R ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1;
+
+            double E_dep_true = slice->reco.pfp.at(ipfp_muon).trk.truth.p.startE - slice->reco.pfp.at(ipfp_muon).trk.truth.p.endE;
+            double E_true_in_hits = slice->reco.pfp.at(ipfp_muon).trk.truth.bestmatch.energy/3. * slice->reco.pfp.at(ipfp_muon).trk.truth.bestmatch.energy_completeness;
+
+            return E_true_in_hits / E_dep_true;
+
+        });
+
+        const ana::Var slice_leading_proton_R ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (slice->reco.pfp[ipfp].trk.len>length) {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+
+            if (ipfp_proton == -1) return -5;
+
+            double E_dep_true = slice->reco.pfp.at(ipfp_proton).trk.truth.p.startE - slice->reco.pfp.at(ipfp_proton).trk.truth.p.endE;
+            double E_true_in_hits = slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.energy/3. * slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.energy_completeness;
+
+            return E_true_in_hits / E_dep_true;
+
+        });
     } // namespace reco
 
     namespace truth {
@@ -1170,7 +1232,7 @@ namespace vars {
 
             if (std::isnan(slice->truth.E)) return -9999;
 
-            return slice->truth.E - reco_E/slice->truth.E;
+            return (reco_E - slice->truth.E)/slice->truth.E;
         }); // const ana::Var slice_neutrino_dE
     } // namespace truth
 } // namespace vars

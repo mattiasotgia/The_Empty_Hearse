@@ -104,11 +104,11 @@ namespace no_pid {
         for (auto const& ipfp_length: ipfp_length_pairs_all) 
             ordered_ipfp.push_back(ipfp_length.first);
 
-        if (slice->reco.npfp < N || ordered_ipfp.size() < N) 
+        if (slice->reco.npfp <= N || ordered_ipfp.size() <= N) 
             return ordered_ipfp;
         
         std::vector<int> tmp_ipfp;
-        for (std::size_t i=0; i<ordered_ipfp.size(); ++i)
+        for (std::size_t i=0; i<N; ++i)
             tmp_ipfp.push_back(ordered_ipfp[i]);
 
         return tmp_ipfp;
@@ -116,21 +116,21 @@ namespace no_pid {
 
     namespace vars {
         double slice_muon_hit_completeness (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
             return slice->reco.pfp.at(ipfp_muon).trk.truth.bestmatch.hit_completeness;
         } // double slice_muon_hit_completeness
 
         double slice_leading_proton_hit_completeness (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             std::vector<int> ipfps = ordered_pfps_by_length(slice, N);
             int ipfp_proton = -1;
             if (ipfps.size() > 1) 
                 ipfp_proton = ipfps.at(1);
             else 
-                return std::numeric_limits<double>::min();
+                return -std::numeric_limits<double>::max();
             
             return slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.hit_completeness;
         } // double slice_leading_proton_hit_completeness
@@ -149,21 +149,21 @@ namespace no_pid {
         } // std::vector<double> slice_protons_hit_completeness
         
         double slice_muon_hit_purity (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
             return slice->reco.pfp.at(ipfp_muon).trk.truth.bestmatch.hit_purity;
         } // double slice_muon_hit_purity
 
         double slice_leading_proton_hit_purity (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             std::vector<int> ipfps = ordered_pfps_by_length(slice, N);
             int ipfp_proton = -1;
             if (ipfps.size() > 1) 
                 ipfp_proton = ipfps.at(1);
             else 
-                return std::numeric_limits<double>::min();
+                return -std::numeric_limits<double>::max();
 
             return slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.hit_purity;
         } // double slice_leading_proton_hit_purity
@@ -182,21 +182,21 @@ namespace no_pid {
         } // std::vector<double> slice_protons_hit_purity
 
         double slice_muon_L_reco_true_ratio (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
             return slice->reco.pfp.at(ipfp_muon).trk.len / slice->reco.pfp.at(ipfp_muon).trk.truth.p.length;
         } // double slice_muon_L_reco_true_ratio
 
         double slice_leading_proton_L_reco_true_ratio (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             std::vector<int> ipfps = ordered_pfps_by_length(slice, N);
             int ipfp_proton = -1;
             if (ipfps.size() > 1) 
                 ipfp_proton = ipfps.at(1);
             else 
-                return std::numeric_limits<double>::min();
+                return -std::numeric_limits<double>::max();
 
             return slice->reco.pfp.at(ipfp_proton).trk.len / slice->reco.pfp.at(ipfp_proton).trk.truth.p.length;
         } // double slice_leading_proton_L_reco_true_ratio
@@ -217,7 +217,7 @@ namespace no_pid {
         } // std::vector<double> slice_protons_L_reco_true_ratio
 
         double slice_vertex_delta_3D (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             if (
                 std::isnan(slice->vertex.x) ||
                 std::isnan(slice->vertex.y) ||
@@ -225,7 +225,7 @@ namespace no_pid {
                 std::isnan(slice->truth.position.x) ||
                 std::isnan(slice->truth.position.y) ||
                 std::isnan(slice->truth.position.z) 
-            ) return std::numeric_limits<double>::min(); 
+            ) return -std::numeric_limits<double>::max(); 
 
             return std::sqrt(
                 std::pow(slice->vertex.x - slice->truth.position.x, 2) + 
@@ -235,11 +235,11 @@ namespace no_pid {
         } // double slice_vertex_delta_3D
 
         double slice_vertex_delta_x (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             if (
                 std::isnan(slice->vertex.x) ||
                 std::isnan(slice->truth.position.x) 
-            ) return std::numeric_limits<double>::min(); 
+            ) return -std::numeric_limits<double>::max(); 
 
             return std::sqrt(
                 std::pow(slice->vertex.x - slice->truth.position.x, 2)
@@ -247,11 +247,11 @@ namespace no_pid {
         } // double slice_vertex_delta_x
 
         double slice_vertex_delta_y (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             if (
                 std::isnan(slice->vertex.y) ||
                 std::isnan(slice->truth.position.y) 
-            ) return std::numeric_limits<double>::min(); 
+            ) return -std::numeric_limits<double>::max(); 
 
             return std::sqrt(
                 std::pow(slice->vertex.y - slice->truth.position.y, 2)
@@ -259,11 +259,11 @@ namespace no_pid {
         } // double slice_vertex_delta_y
 
         double slice_vertex_delta_z (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             if (
                 std::isnan(slice->vertex.z) ||
                 std::isnan(slice->truth.position.z) 
-            ) return std::numeric_limits<double>::min(); 
+            ) return -std::numeric_limits<double>::max(); 
 
             return std::sqrt(
                 std::pow(slice->vertex.z - slice->truth.position.z, 2)
@@ -271,9 +271,9 @@ namespace no_pid {
         } // double slice_vertex_delta_z
 
         double slice_muon_P_reco_true_ratio (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
             double startp_mag = std::sqrt(
                 std::pow(slice->reco.pfp.at(ipfp_muon).trk.truth.p.startp.x, 2) + 
@@ -282,16 +282,16 @@ namespace no_pid {
             );
 
             return slice->reco.pfp.at(ipfp_muon).trk.rangeP.p_muon / startp_mag;
-        } // const ana::Var slice_muon_L_reco_true_ratio
+        } // double slice_muon_P_reco_true_ratio
 
         double slice_leading_proton_P_reco_true_ratio (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             std::vector<int> ipfps = ordered_pfps_by_length(slice, N);
             int ipfp_proton = -1;
             if (ipfps.size() > 1) 
                 ipfp_proton = ipfps.at(1);
             else 
-                return std::numeric_limits<double>::min();
+                return -std::numeric_limits<double>::max();
 
             double startp_mag = std::sqrt(
                 std::pow(slice->reco.pfp.at(ipfp_proton).trk.truth.p.startp.x, 2) + 
@@ -300,7 +300,7 @@ namespace no_pid {
             );
 
             return slice->reco.pfp.at(ipfp_proton).trk.rangeP.p_proton / startp_mag;
-        } // const ana::Var slice_leading_proton_L_reco_true_ratio
+        } // double slice_leading_proton_P_reco_true_ratio
 
         std::vector<double> slice_protons_P_reco_true_ratio (const caf::SRSliceProxy *slice, const int& N) {
             if (slice == nullptr) return std::vector<double>();
@@ -324,20 +324,21 @@ namespace no_pid {
             } // loop
 
             return values;
-        } // const ana::Var slice_protons_L_reco_true_ratio
+        } // std::vector<double> slice_protons_P_reco_true_ratio
 
         double slice_neutrino_reco_E (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
-            double p_mu_x = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.x;   // Momenta are in GeV
-            double p_mu_y = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.y;   // Momenta are in GeV
-            double p_mu_z = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.z;   // Momenta are in GeV
+            TVector3 muon_momentum;
+            muon_momentum.SetXYZ(
+                slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.x,
+                slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.y,
+                slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.z
+            ); 
 
-            double p_mu_tot = std::sqrt(p_mu_x * p_mu_x + p_mu_y * p_mu_y + p_mu_z * p_mu_z); // [GeV]
-
-            double E_mu = 1000 * std::sqrt(p_mu_tot * p_mu_tot + std::pow(particle_data::masses::muon, 2) / (1000 * 1000));
+            double E_mu = 1000 * std::sqrt(muon_momentum.Mag2() + std::pow(particle_data::masses::muon / 1000., 2));
             double E_p = 0;
 
             std::vector<int> Np_ipfp = ordered_pfps_by_length(slice, N);
@@ -362,16 +363,16 @@ namespace no_pid {
         } // double slice_neutrino_reco_E
 
         double slice_neutrino_true_E (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
-            if (std::isnan(slice->truth.E)) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
+            if (std::isnan(slice->truth.E)) return -std::numeric_limits<double>::max();
 
             return  slice->truth.E;
         } // double slice_neutrino_true_E
 
         double slice_neutrino_reco_dE (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
             double p_mu_x = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.x;   // Momenta are in GeV
             double p_mu_y = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.y;   // Momenta are in GeV
@@ -406,9 +407,9 @@ namespace no_pid {
         } // double slice_neutrino_reco_dE
 
         double slice_neutrino_reco_pT (const caf::SRSliceProxy *slice, const int& N) {
-            if (slice == nullptr) return std::numeric_limits<double>::min();
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
             int ipfp_muon = longest_pfp(slice);
-            if (ipfp_muon < 0) return std::numeric_limits<double>::min();
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
 
             double p_mu_x = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.x;   // Momenta are in GeV
             double p_mu_y = slice->reco.pfp[ipfp_muon].trk.rangeP.p_muon * slice->reco.pfp[ipfp_muon].trk.dir.y;   // Momenta are in GeV
@@ -425,6 +426,53 @@ namespace no_pid {
             } // loop Np_ipfp
             return std::sqrt(std::pow(p_mu_x + p_p_x, 2) + std::pow(p_mu_y + p_p_y, 2));
         } // double slice_neutrino_reco_pT
+
+        double slice_muon_R (const caf::SRSliceProxy *slice, const int& N) {    
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
+            int ipfp_muon = longest_pfp(slice);
+            if (ipfp_muon < 0) return -std::numeric_limits<double>::max();
+
+            double E_dep_true = slice->reco.pfp.at(ipfp_muon).trk.truth.p.startE - slice->reco.pfp.at(ipfp_muon).trk.truth.p.endE;
+            double E_true_in_hits = slice->reco.pfp.at(ipfp_muon).trk.truth.bestmatch.energy/3. * slice->reco.pfp.at(ipfp_muon).trk.truth.bestmatch.energy_completeness;
+
+            return E_true_in_hits / E_dep_true;
+        } // double slice_muon_R
+
+        double slice_leading_proton_R (const caf::SRSliceProxy *slice, const int& N) {
+            if (slice == nullptr) return -std::numeric_limits<double>::max();
+            std::vector<int> ipfps = ordered_pfps_by_length(slice, N);
+            int ipfp_proton = -1;
+            if (ipfps.size() > 1) 
+                ipfp_proton = ipfps.at(1);
+            else 
+                return -std::numeric_limits<double>::max();
+
+            double E_dep_true = slice->reco.pfp.at(ipfp_proton).trk.truth.p.startE - slice->reco.pfp.at(ipfp_proton).trk.truth.p.endE;
+            double E_true_in_hits = slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.energy/3. * slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.energy_completeness;
+    
+            return E_true_in_hits / E_dep_true;
+        } // double slice_leading_proton_R
+
+        std::vector<double> slice_protons_R (const caf::SRSliceProxy *slice, const int& N) {
+            if (slice == nullptr) return std::vector<double>();
+            std::vector<int> ipfps = ordered_pfps_by_length(slice, N);
+            if (ipfps.size() < 1) 
+                return std::vector<double>();
+
+            std::vector<double> values;
+            double startp_mag = 0;
+            double E_dep_true, E_true_in_hits;
+            double ratio = 0;
+            for (std::size_t i=1; i<ipfps.size(); i++) {
+                
+                E_dep_true = slice->reco.pfp.at(ipfps.at(i)).trk.truth.p.startE - slice->reco.pfp.at(ipfps.at(i)).trk.truth.p.endE;
+                E_true_in_hits = slice->reco.pfp.at(ipfps.at(i)).trk.truth.bestmatch.energy/3. * slice->reco.pfp.at(ipfps.at(i)).trk.truth.bestmatch.energy_completeness;
+                ratio = E_true_in_hits / E_dep_true;
+                values.push_back(ratio);
+            } // loop
+
+            return values;
+        } // std::vector<double> slice_protons_R
     } // namespace vars
 } // namespace no_pid
 
