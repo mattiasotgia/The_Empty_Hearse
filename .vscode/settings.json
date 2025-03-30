@@ -7,7 +7,15 @@
         "cheating_score.C": "cpp",
         "test_vtx_position.C": "cpp",
         "test_vars.C": "cpp",
-        "reco_1muNp.C": "cpp"
+        "reco_1muNp.C": "cpp",
+        "bad_vtx_event.C": "cpp",
+        "bad_vtx_event copy.C": "cpp",
+        "effect_of_3d_cheating.C": "cpp",
+        "event_by_event.C": "cpp",
+        "test_1mu1p.C": "cpp",
+        "cosmic_id.C": "cpp",
+        "reco_1muNp copy.C": "cpp",
+        "reco_1mu1p_checks.C": "cpp"
     },
     "C_Cpp.default.includePath": [
         "./check_cheating/helper.h"
