@@ -103,8 +103,7 @@ namespace var_utils {
         const ana::Var &slice_var, 
         const ana::Cut &reco_cut = ana::kNoCut,  
         cut_type what_to_cut_on = cut_type::RECO, 
-        const ana::Cut &truth_cut = ana::kNoCut,
-        bool info = false, double treshold = 0.25
+        const ana::Cut &truth_cut = ana::kNoCut
     ) {
         return ana::SpillVar([=](const caf::SRSpillProxy *spill) -> double {
             int selected_slices = 0;
@@ -117,7 +116,7 @@ namespace var_utils {
                     if (debug) std::cout << "The mode was RECO but the cuts rejected this event" << std::endl;
                     continue;
                 } 
-                if (what_to_cut_on == cut_type::TRUE_1muNp && !(
+                if (what_to_cut_on == cut_type::TRUE_1muN1p && !(
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp && truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
@@ -129,7 +128,7 @@ namespace var_utils {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
                     continue;
                 }
-                if (what_to_cut_on == cut_type::TRUE_1muN1p && !((
+                if (what_to_cut_on == cut_type::TRUE_1muNp && !((
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p || 
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp) && 
                     truth_cut(&slice)
@@ -164,9 +163,6 @@ namespace var_utils {
                     continue;
 
                 slice_value = slice_var(&slice);
-                if (slice_value > treshold && info) {
-                    std::cout << "Slice value = " << slice_value << " > " << treshold << " for run.event = " << run(spill) << "." << event(spill) << std::endl;
-                }
 
                 selected_slices ++ ;
             } // loop spill->slc
@@ -584,13 +580,16 @@ namespace cuts {
             if (prim.G4ID < 0)     continue;
             if (prim.cryostat < 0) continue;
             if (
-                std::abs(prim.pdg) != 13   &&   // mu
-                std::abs(prim.pdg) != 2212 &&   // p
-                std::abs(prim.pdg) != 211  &&   // pi
-                std::abs(prim.pdg) != 11        // e 
-            ) continue; // why are we selecting only charged primaries?
+                std::abs(prim.pdg) == 13   ||   // mu
+                std::abs(prim.pdg) == 2212 ||   // p
+                std::abs(prim.pdg) == 211  ||   // pi
+                std::abs(prim.pdg) == 11        // e 
+            ) {
+                if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) {
+                    return false;
+                }
+            }
                     
-            if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) return false;
 
             if (prim.daughters.size() > 0) {
                 int parent_g4id;
@@ -598,14 +597,19 @@ namespace cuts {
                 for (auto const& true_particle: spill->true_particles) {
                     parent_g4id = true_particle.parent;
 
-                    if (parent_g4id != prim.G4ID) continue;
-                    if (
-                        std::abs(true_particle.pdg) != 13   &&  // mu
-                        std::abs(true_particle.pdg) != 2212 &&  // p
-                        std::abs(true_particle.pdg) != 211  &&  // pi
-                        std::abs(true_particle.pdg) != 11       // e 
-                    ) continue; // why are we selecting only charged primaries?
-
+                    if (parent_g4id == prim.G4ID) {
+                        if (
+                            std::abs(true_particle.pdg) == 13   ||  // mu
+                            std::abs(true_particle.pdg) == 2212 ||  // p
+                            std::abs(true_particle.pdg) == 211  ||  // pi
+                            std::abs(true_particle.pdg) == 11       // e 
+                        ) {
+                            if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) {
+                                return false;
+                            }
+                        }
+                    }
+                    
                     /* L’idea e’ mettere soglia su quello che deposita energia…. 
                      * Quindi tutto quello che sia carico e che di solito abbiamo
                      * Per dire in qualche punto ci deve essere anche una soglia 
@@ -614,7 +618,6 @@ namespace cuts {
                      * pero si sui due fotoni del pi0)
                     */
 
-                    if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
                 } // loop spill->true_particles
             } // has daughters
         } // loop slc.truth.prim
@@ -643,104 +646,6 @@ namespace cuts {
             }
             return false;
         });
-
-        const ana::SpillCut spill_all_trk_contained_MC ([](const caf::SRSpillProxy *spill) -> bool {
-            // Cut the spill if the spill->mc.nu event (iscc && pdg == 14)) has anything 
-            // or daughters going out of the contained volume
-            
-            for (auto const& nu: spill->mc.nu) {
-
-                if (!nu.iscc || nu.pdg != 14) continue;
-
-                for (auto const& prim: nu.prim) {
-                    if (prim.G4ID < 0)     continue;
-                    if (prim.cryostat < 0) continue;
-                    if (
-                        std::abs(prim.pdg) != 13   && 
-                        std::abs(prim.pdg) != 2212 && 
-                        std::abs(prim.pdg) != 211  && 
-                        std::abs(prim.pdg) != 11
-                    ) continue; // why are we selecting only charged primaries?
-                        
-                    if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) return false;
-
-                    if (prim.daughters.size() < 0) continue;
-                    int parent_g4id;
-
-                    for (auto const& true_particle: spill->true_particles) {
-                        parent_g4id = true_particle.parent;
-
-                        if (parent_g4id != prim.G4ID) continue;
-                        if (
-                            std::abs(true_particle.pdg) != 13   && 
-                            std::abs(true_particle.pdg) != 2212 && 
-                            std::abs(true_particle.pdg) != 211  && 
-                            std::abs(true_particle.pdg) != 11
-                        ) continue; // why are we selecting only charged primaries?
-
-                        /* L’idea e’ mettere soglia su quello che deposita energia…. 
-                         * Quindi tutto quello che sia carico e che di solito abbiamo
-                         * Per dire in qualche punto ci deve essere anche una soglia 
-                         * sui fotoni singoli, per cui se hanno troppa energia depositata 
-                         * possono essere identificati (non avevamo messo soglia sui pi0 
-                         * pero si sui due fotoni del pi0)
-                        */
-
-                        if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
-                    } // loop spill->true_particles
-                } // loop nu.prim
-            } // loop spill->mc.nu
-            return true;
-        }); // const ana::SpillCut spill_all_trk_contained_MC
-
-        const ana::SpillCut spill_all_trk_contained_truth ([](const caf::SRSpillProxy *spill) -> bool {
-            // Cut the spill if the spill->slc slice (truth.iscc && truth.pdg == 14)) has anything 
-            // or daughters going out of the contained volume
-
-            for (auto const& slc: spill->slc) {
-                if (!slc.truth.iscc || slc.truth.pdg != 14) continue;
-
-                for (auto const& prim: slc.truth.prim) {
-                    if (prim.G4ID < 0)     continue;
-                    if (prim.cryostat < 0) continue;
-                    if (
-                        std::abs(prim.pdg) != 13   &&   // mu
-                        std::abs(prim.pdg) != 2212 &&   // p
-                        std::abs(prim.pdg) != 211  &&   // pi
-                        std::abs(prim.pdg) != 11        // e 
-                    ) continue; // why are we selecting only charged primaries?
-                        
-                    if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) return false;
-
-                    if (prim.daughters.size() > 0) {
-                        int parent_g4id;
-
-                        for (auto const& true_particle: spill->true_particles) {
-                            parent_g4id = true_particle.parent;
-
-                            if (parent_g4id != prim.G4ID) continue;
-                            if (
-                                std::abs(true_particle.pdg) != 13   &&  // mu
-                                std::abs(true_particle.pdg) != 2212 &&  // p
-                                std::abs(true_particle.pdg) != 211  &&  // pi
-                                std::abs(true_particle.pdg) != 11       // e 
-                            ) continue; // why are we selecting only charged primaries?
-
-                            /* L’idea e’ mettere soglia su quello che deposita energia…. 
-                             * Quindi tutto quello che sia carico e che di solito abbiamo
-                             * Per dire in qualche punto ci deve essere anche una soglia 
-                             * sui fotoni singoli, per cui se hanno troppa energia depositata 
-                             * possono essere identificati (non avevamo messo soglia sui pi0 
-                             * pero si sui due fotoni del pi0)
-                            */
-
-                            if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
-                        } // loop spill->true_particles
-                    } // has daughters
-                } // loop slc.truth.prim
-            } // loop spill->slc
-            return true;
-        }); // const ana::SpillCut spill_all_trk_contained_truth
 
         const ana::Cut slice_1mu_only ([](const caf::SRSliceProxy *slice) -> bool {
             int muon_n = 0;

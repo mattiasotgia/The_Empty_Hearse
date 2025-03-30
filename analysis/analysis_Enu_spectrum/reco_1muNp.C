@@ -26,7 +26,7 @@ const ana::Cut def_cut_truth = (
 
 const cut_type_t local_cut_type = cut_type_t::TRUE_1mu1p;
 
-const ana::SpillVar spill_dE                    = var_utils::make_spill_from_slice (vars::truth::slice_neutrino_dE,             def_cut, local_cut_type, def_cut_truth, true);
+const ana::SpillVar spill_dE                    = var_utils::make_spill_from_slice (vars::truth::slice_neutrino_dE,             def_cut, local_cut_type, def_cut_truth);
 const ana::SpillVar spill_reco_E                = var_utils::make_spill_from_slice (vars::reco::slice_neutrino_energy_1muNp,    def_cut, local_cut_type, def_cut_truth);
 const ana::SpillVar spill_true_E                = var_utils::make_spill_from_slice (vars::truth::slice_neutrino_energy,         def_cut, local_cut_type, def_cut_truth);
 const ana::SpillVar spill_reco_pT               = var_utils::make_spill_from_slice (vars::reco::slice_neutrino_pT_1muNp,        def_cut, local_cut_type, def_cut_truth);
