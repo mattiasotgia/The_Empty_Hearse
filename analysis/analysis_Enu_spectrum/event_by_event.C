@@ -118,7 +118,7 @@
 
 const ana::SpillCut valid_events ([](const caf::SRSpillProxy *spill) -> bool {
 
-    std::vector<unsigned> golden_events = {4160};
+    std::vector<unsigned> golden_events = {6947,  8968, 10082, 13842, 15746, 16193};
     // std::vector<unsigned> golden_events = {6947, 8968, 10082, 13842, 14994, 15746, 16193};
 
     // return std::find(good_events.begin(), good_events.end(), static_cast<int>(event(spill))) != good_events.end();
