@@ -8,26 +8,23 @@
 
 #include "sbnana/CAFAna/Core/Tree.h"
 
+using level_t = logger::level;
+using cut_type_t = var_utils::cut_type;
+
 const ana::Cut def_cut = (
     // ana::kNoCut
     cuts::reco::slice_1mu1p             &&
     cuts::reco::slice_at_least_mu       &&
     cuts::reco::slice_vtx_in_FV         &&
-    cuts::reco::slice_mu_50_length      &&
-    cuts::reco::slice_mu_in_contained   &&
-    cuts::reco::slice_mu_not_crossing   &&
     cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
 );
 
 const ana::Cut def_cut_truth = (
-    cuts::truth::slice_numuCC           &&
     cuts::truth::slice_vtx_in_FV
 );
 
-const var_utils::cut_type local_cut_type = var_utils::cut_type::BOTH_1mu1p;
-
-using level_t = logger::level;
+const cut_type_t local_cut_type = cut_type_t::TRUE_1mu1p;
 
 const ana::SpillVar spill_dE                    = var_utils::make_spill_from_slice (vars::truth::slice_neutrino_dE,             def_cut, local_cut_type, def_cut_truth, true);
 const ana::SpillVar spill_reco_E                = var_utils::make_spill_from_slice (vars::reco::slice_neutrino_energy_1muNp,    def_cut, local_cut_type, def_cut_truth);

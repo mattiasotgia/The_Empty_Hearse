@@ -24,14 +24,39 @@ namespace particle_data {
         double muon = 105.6583755;      // PDG value 2024 [MeV]
     }
 
-    enum int_type {
+    enum int_type_t {
         true_visible_1muNp,
         true_visible_1mu1p,
         unclassified
     };
 
     double minimum_gamma_MeV = 25.;
+    double GeV = 1000.;
 } // namespace particle_data
+
+namespace var_utils {
+    int find_muon(const caf::SRSliceProxy&, double);
+    double dist_cut = 10.;
+}
+
+namespace cuts {
+    bool in_contained(double, double, double, double);
+    namespace reco {
+        const ana::Cut slice_at_least_mu ([](const caf::SRSliceProxy *slice) -> bool {
+            /* We should at least found one muon, otherwise something bad happens
+            */
+
+            // Using dist_cut = 10 [cm]
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut); 
+            if (ipfp_muon == -1) return false; // no muon found ahaha
+            return true;
+        }); // const ana::Cut slice_at_least_mu
+    }
+}
+
+// std::vector<double> events_in_maria = {
+//     12829, 12833, 6312, 6323, 6334, 2925, 16068, 13478, 16606, 10465, 679, 1458, 13842, 13844, 3382, 2313, 2749, 14076, 12951, 12957, 12986, 3499, 10348, 2197, 9105, 9140, 11716, 11718, 16254, 16270, 16292, 16294, 9565, 14916, 9360, 3837, 10616, 8309, 8327, 8344, 4999, 11406, 11422, 8206, 7839, 4037, 6257, 6272, 8895, 8896, 9656, 6612, 9956, 1088, 5082, 9036, 6505, 6511, 6546, 5601, 5640, 12354, 1101, 13718, 13741, 2583, 7179, 17087, 1307, 5814, 11682, 11689, 4827, 4831, 4833, 4849, 14162, 15137, 14663, 1021, 14134, 14141, 4889, 4891, 7082, 4103, 4104, 4106, 4143, 4145, 4148, 7433, 7443, 16238, 11507, 11543, 805, 165, 183, 188, 16377, 16398, 5253, 7474, 12861, 15563, 15746, 16839, 4758, 13798, 4444, 2275, 2295, 8408, 3573, 16320, 16330, 6561, 6580, 8172, 8184, 8198, 9511, 9532, 9533, 4505, 4543, 4545, 6967, 6976, 6985, 4741, 8722, 9318, 9349, 1657, 1697, 14800, 6445, 10420, 2088, 8288, 12207, 11081, 4575, 15453, 16738, 10367, 10381, 11810, 11820, 851, 856, 11273, 11277, 6734, 13516, 13521, 13532, 13544, 7378, 1175, 16193, 965, 5330, 11913, 11933, 7791, 14029, 14035, 4497, 15002, 15016, 3639, 1713, 1725, 1730, 1745, 10883, 3202, 2652, 2670, 8953, 8968, 14458, 14470, 14490, 15401, 15414, 15415, 15428, 8035, 8109, 13163, 12411, 12428, 4223, 4233, 2856, 2896, 6078, 4601, 4627, 4634, 14624, 14641, 13213, 906, 15963, 15272, 15296, 503, 510, 8573, 414, 9261, 9280, 16666, 16694, 13268, 2467, 3278, 3299, 13037, 3755, 3783, 13134, 7263, 7270, 2546, 14994, 12756, 12783, 8654, 8666, 9434, 9473, 5677, 17282, 7510, 7534, 1988, 7969, 5564, 17459, 17470, 13915, 6947, 5983, 17234, 5216, 17035, 16537, 16546, 3171, 5869, 16938, 14444, 12671, 12677, 13605, 3919, 6845, 11862, 16562, 16575, 9721, 9747, 10082, 10094, 14556, 14566, 11951, 11966, 11993, 12118, 12016, 16987, 2965, 15651, 7015, 1601, 1623, 1587, 12914, 12938 
+// };
 
 namespace var_utils {
 
@@ -50,7 +75,6 @@ namespace var_utils {
         double pi;
     }; 
 
-    double dist_cut = 10.;
     values_minmax barycenterFM_deltaZ_Trigger = {0., 100.};
 
     std::string dEdx_temp = 
@@ -74,62 +98,76 @@ namespace var_utils {
         MC_1mu1p
     };
 
-    particle_data::int_type classification_type (const caf::SRSpillProxy*, const caf::SRSliceProxy*);
+    particle_data::int_type_t classification_type (const caf::SRSpillProxy*, const caf::SRSliceProxy*);
     const ana::SpillVar make_spill_from_slice (
         const ana::Var &slice_var, 
         const ana::Cut &reco_cut = ana::kNoCut,  
         cut_type what_to_cut_on = cut_type::RECO, 
         const ana::Cut &truth_cut = ana::kNoCut,
-        bool info = false, double treshold = 0.25,
-        std::function<particle_data::int_type(
-            const caf::SRSpillProxy*, const caf::SRSliceProxy*
-        )> classification = classification_type
+        bool info = false, double treshold = 0.25
     ) {
         return ana::SpillVar([=](const caf::SRSpillProxy *spill) -> double {
             int selected_slices = 0;
             double slice_value = -9999;
+            bool debug = false;
     
-            // if (what_to_cut_on == cut_type::MC_1muNp || what_to_cut_on == cut_type::MC_1mu1p) {
-            //     for (auto const& nu: spill->mc.nu) {
-            //         if (what_to_cut_on == cut_type::MC_1muNp && 
-            //             classification_type_MC(spill, nu) != particle_data::int_type::true_visible_1muNp) continue;
-            //         if (what_to_cut_on == cut_type::MC_1mu1p && 
-            //             classification_type_MC(spill, nu) != particle_data::int_type::true_visible_1mu1p) continue;
-                    
-                    
-            //     } // loop spill->nu
-            // } // MC classification :)
             for (auto const& slice: spill->slc) {
     
-                if (what_to_cut_on == cut_type::RECO && !reco_cut(&slice)) continue; 
-                if (what_to_cut_on == cut_type::TRUE_1muNp && (
-                    classification(spill, &slice) != particle_data::int_type::true_visible_1muNp || !truth_cut(&slice)
-                ))
+                if (what_to_cut_on == cut_type::RECO && !reco_cut(&slice)) {
+                    if (debug) std::cout << "The mode was RECO but the cuts rejected this event" << std::endl;
                     continue;
-                if (what_to_cut_on == cut_type::TRUE_1mu1p && (
-                    classification(spill, &slice) != particle_data::int_type::true_visible_1mu1p || !truth_cut(&slice)
-                ))
+                } 
+                if (what_to_cut_on == cut_type::TRUE_1muNp && !(
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp && truth_cut(&slice)
+                )) {
+                    if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
                     continue;
-                if (what_to_cut_on == cut_type::BOTH_1muNp && (
-                    !reco_cut(&slice) || !truth_cut(&slice) || 
-                    classification(spill, &slice) != particle_data::int_type::true_visible_1muNp || classification(spill, &slice) != particle_data::int_type::true_visible_1mu1p
-                ))
+                }
+                if (what_to_cut_on == cut_type::TRUE_1mu1p && !(
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p && truth_cut(&slice)
+                )) {
+                    if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
                     continue;
-                if (what_to_cut_on == cut_type::BOTH_1muN1p && (
-                    !reco_cut(&slice) || !truth_cut(&slice) || 
-                    classification(spill, &slice) != particle_data::int_type::true_visible_1muNp
-                ))
+                }
+                if (what_to_cut_on == cut_type::TRUE_1muN1p && !((
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p || 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp) && 
+                    truth_cut(&slice)
+                )) {
+                    if (debug) std::cout << "The mode was TRUE_1µN1p but the cuts rejected this event" << std::endl;
                     continue;
-                if (what_to_cut_on == cut_type::BOTH_1mu1p && (
-                    !reco_cut(&slice) || !truth_cut(&slice) || 
-                    classification(spill, &slice) != particle_data::int_type::true_visible_1mu1p
-                ))
+                }
+                if (what_to_cut_on == cut_type::BOTH_1muNp && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    (classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp || 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p)
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1µNp (N>=1) but the cuts rejected this event" << std::endl;
                     continue;
+                }
+                if (what_to_cut_on == cut_type::BOTH_1muN1p && !(
+                    reco_cut(&slice) && truth_cut(&slice) || 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1µN1p (N>1) but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                if (what_to_cut_on == cut_type::BOTH_1mu1p && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu1p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
                 
+                if (!cuts::reco::slice_at_least_mu(&slice))
+                    continue;
+
                 slice_value = slice_var(&slice);
                 if (slice_value > treshold && info) {
                     std::cout << "Slice value = " << slice_value << " > " << treshold << " for run.event = " << run(spill) << "." << event(spill) << std::endl;
                 }
+
                 selected_slices ++ ;
             } // loop spill->slc
         
@@ -191,9 +229,10 @@ namespace var_utils {
             if (bin >= 1 && bin <= dedx_range_pro->GetNbinsX()) {
                 
                 double bincpro = dedx_range_pro->GetBinContent(bin);
-                if (bincpro < 1e-6)  // for 0 bin content, using neighboring bins
+                if (bincpro < 1e-6) { // for 0 bin content, using neighboring bins
                     bincpro = 
                         (dedx_range_pro->GetBinContent(bin - 1) + dedx_range_pro->GetBinContent(bin + 1)) / 2;
+                }
                 
                 double bincka = dedx_range_ka->GetBinContent(bin);
                 if (bincka < 1e-6)
@@ -244,8 +283,8 @@ namespace var_utils {
 
         return {chi2mu / npt, chi2pro / npt, chi2ka / npt, chi2pi / npt};
     } // chi2 chi2_ALG
-
-    int find_muon (const caf::SRSliceProxy &slice, int dist_mucut) {
+    
+    int find_muon (const caf::SRSliceProxy &slice, double dist_mucut) {
 
         /* Find the pfp number of the muon 
         */
@@ -288,12 +327,12 @@ namespace var_utils {
 
             if (
                 slice.reco.pfp[ipfp].trk.len > max_length   && 
-                // slice.reco.pfp[ipfp].trk.len > 50           && // The selection of the longest muon being 50+ cm should not be here? // separate Cut below
+                slice.reco.pfp[ipfp].trk.len > 50           && // The selection of the longest muon being 50+ cm should not be here? // separate Cut below
                 (reco_vtx - reco_start).Mag() < dist_mucut  && 
                 chi2_values.muon < 30                       && // chi2 cuts on proton and muon 
                 chi2_values.proton > 60                     && // chi2 cuts on proton and muon 
-                // in_contained (slice.reco.pfp[ipfp].trk.end.x, slice.reco.pfp[ipfp].trk.end.y, slice.reco.pfp[ipfp].trk.end.z, 5.) && // separate Cut below
-                // slice.reco.pfp[ipfp].trk.end.x * slice.vertex.x > 0 &&                                                               // separate Cut below
+                cuts::in_contained (slice.reco.pfp[ipfp].trk.end.x, slice.reco.pfp[ipfp].trk.end.y, slice.reco.pfp[ipfp].trk.end.z, 5.) && // separate Cut below
+                slice.reco.pfp[ipfp].trk.end.x * slice.vertex.x > 0 &&                                                               // separate Cut below
                 slice.reco.pfp[ipfp].parent_is_primary
             ) {
                 max_length = slice.reco.pfp[ipfp].trk.len;
@@ -385,7 +424,7 @@ namespace var_utils {
             if (
                 chi2_values.proton >= 100           && 
                 (rec_vtx - start).Mag() < dist_cut  && 
-                std::sqrt ( std::pow(particle_data::masses::pion, 2) + std::pow(start_mom_V3.Mag() * 1000, 2) ) - particle_data::masses::pion >= 25.0 && 
+                std::sqrt ( std::pow(particle_data::masses::pion, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) ) - particle_data::masses::pion >= 25.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary
             )  return 2;
 
@@ -400,7 +439,7 @@ namespace var_utils {
             if (
                 chi2_values.proton < 100            && 
                 (rec_vtx - start).Mag() < dist_cut  && 
-                std::sqrt ( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3.Mag() * 1000, 2) ) - particle_data::masses::proton >= 50.0 && 
+                std::sqrt ( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) ) - particle_data::masses::proton >= 50.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary
             ) return 1;
 
@@ -416,7 +455,7 @@ namespace var_utils {
                 );
 
                 if (
-                    std::sqrt( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3_2.Mag() * 1000, 2)) - particle_data::masses::proton >= 50.0 && 
+                    std::sqrt( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3_2.Mag() * particle_data::GeV, 2)) - particle_data::masses::proton >= 50.0 && 
                     (rec_vtx - start).Mag() < dist_cut && 
                     slice.reco.pfp[ipfp].parent_is_primary
                 ) return 1;
@@ -429,9 +468,9 @@ namespace var_utils {
 
                 if (std::isnan(slice.reco.pfp[ipfp].shw.plane[use_plane2].energy))
                     return 9;
-                if (slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * 1000 < 25.0)
+                if (slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV < 25.0)
                     return 9;
-                if (slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * 1000 > 25.0 && slice.reco.pfp[ipfp].parent_is_primary)
+                if (slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV > 25.0 && slice.reco.pfp[ipfp].parent_is_primary)
                     return 3;
             }
         }
@@ -495,38 +534,46 @@ namespace cuts {
             if (prim.G4ID < 0)     continue;
             if (prim.cryostat < 0) continue;
             if (
-                std::abs(prim.pdg) != 13   &&   // mu
-                std::abs(prim.pdg) != 2212 &&   // p
-                std::abs(prim.pdg) != 211  &&   // pi
-                std::abs(prim.pdg) != 11        // e 
-            ) continue; // why are we selecting only charged primaries?
+                std::abs(prim.pdg) == 13   ||   // mu
+                std::abs(prim.pdg) == 2212 ||   // p
+                std::abs(prim.pdg) == 211  ||   // pi
+                std::abs(prim.pdg) == 11        // e 
+            ) {
+                if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) {
+                    return false;
+                }
+            }
                     
-            if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) return false;
 
-            if (prim.daughters.size() < 0) continue;
-            int parent_g4id;
+            if (prim.daughters.size() > 0) {
+                int parent_g4id;
 
-            for (auto const& true_particle: spill->true_particles) {
-                parent_g4id = true_particle.parent;
+                for (auto const& true_particle: spill->true_particles) {
+                    parent_g4id = true_particle.parent;
 
-                if (parent_g4id != prim.G4ID) continue;
-                if (
-                    std::abs(true_particle.pdg) != 13   &&  // mu
-                    std::abs(true_particle.pdg) != 2212 &&  // p
-                    std::abs(true_particle.pdg) != 211  &&  // pi
-                    std::abs(true_particle.pdg) != 11       // e 
-                ) continue; // why are we selecting only charged primaries?
+                    if (parent_g4id == prim.G4ID) {
+                        if (
+                            std::abs(true_particle.pdg) == 13   ||  // mu
+                            std::abs(true_particle.pdg) == 2212 ||  // p
+                            std::abs(true_particle.pdg) == 211  ||  // pi
+                            std::abs(true_particle.pdg) == 11       // e 
+                        ) {
+                            if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) {
+                                return false;
+                            }
+                        }
+                    }
                     
-                /* L’idea e’ mettere soglia su quello che deposita energia…. 
-                 * Quindi tutto quello che sia carico e che di solito abbiamo
-                 * Per dire in qualche punto ci deve essere anche una soglia 
-                 * sui fotoni singoli, per cui se hanno troppa energia depositata 
-                 * possono essere identificati (non avevamo messo soglia sui pi0 
-                 * pero si sui due fotoni del pi0)
-                */
+                    /* L’idea e’ mettere soglia su quello che deposita energia…. 
+                     * Quindi tutto quello che sia carico e che di solito abbiamo
+                     * Per dire in qualche punto ci deve essere anche una soglia 
+                     * sui fotoni singoli, per cui se hanno troppa energia depositata 
+                     * possono essere identificati (non avevamo messo soglia sui pi0 
+                     * pero si sui due fotoni del pi0)
+                    */
 
-                if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
-            } // loop spill->true_particles
+                } // loop spill->true_particles
+            } // has daughters
         } // loop slc.truth.prim
         return true;
     } // bool all_trk_contained_truth
@@ -545,30 +592,31 @@ namespace cuts {
                     
             if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) return false;
 
-            if (prim.daughters.size() < 0) continue;
-            int parent_g4id;
+            if (prim.daughters.size() > 0) {
+                int parent_g4id;
 
-            for (auto const& true_particle: spill->true_particles) {
-                parent_g4id = true_particle.parent;
+                for (auto const& true_particle: spill->true_particles) {
+                    parent_g4id = true_particle.parent;
 
-                if (parent_g4id != prim.G4ID) continue;
-                if (
-                    std::abs(true_particle.pdg) != 13   &&  // mu
-                    std::abs(true_particle.pdg) != 2212 &&  // p
-                    std::abs(true_particle.pdg) != 211  &&  // pi
-                    std::abs(true_particle.pdg) != 11       // e 
-                ) continue; // why are we selecting only charged primaries?
-                    
-                /* L’idea e’ mettere soglia su quello che deposita energia…. 
-                 * Quindi tutto quello che sia carico e che di solito abbiamo
-                 * Per dire in qualche punto ci deve essere anche una soglia 
-                 * sui fotoni singoli, per cui se hanno troppa energia depositata 
-                 * possono essere identificati (non avevamo messo soglia sui pi0 
-                 * pero si sui due fotoni del pi0)
-                */
+                    if (parent_g4id != prim.G4ID) continue;
+                    if (
+                        std::abs(true_particle.pdg) != 13   &&  // mu
+                        std::abs(true_particle.pdg) != 2212 &&  // p
+                        std::abs(true_particle.pdg) != 211  &&  // pi
+                        std::abs(true_particle.pdg) != 11       // e 
+                    ) continue; // why are we selecting only charged primaries?
 
-                if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
-            } // loop spill->true_particles
+                    /* L’idea e’ mettere soglia su quello che deposita energia…. 
+                     * Quindi tutto quello che sia carico e che di solito abbiamo
+                     * Per dire in qualche punto ci deve essere anche una soglia 
+                     * sui fotoni singoli, per cui se hanno troppa energia depositata 
+                     * possono essere identificati (non avevamo messo soglia sui pi0 
+                     * pero si sui due fotoni del pi0)
+                    */
+
+                    if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
+                } // loop spill->true_particles
+            } // has daughters
         } // loop slc.truth.prim
         return true;
     } // bool all_trk_contained_MC
@@ -664,30 +712,31 @@ namespace cuts {
                         
                     if (!in_contained(prim.end.x, prim.end.y, prim.end.z)) return false;
 
-                    if (prim.daughters.size() < 0) continue;
-                    int parent_g4id;
+                    if (prim.daughters.size() > 0) {
+                        int parent_g4id;
 
-                    for (auto const& true_particle: spill->true_particles) {
-                        parent_g4id = true_particle.parent;
+                        for (auto const& true_particle: spill->true_particles) {
+                            parent_g4id = true_particle.parent;
 
-                        if (parent_g4id != prim.G4ID) continue;
-                        if (
-                            std::abs(true_particle.pdg) != 13   &&  // mu
-                            std::abs(true_particle.pdg) != 2212 &&  // p
-                            std::abs(true_particle.pdg) != 211  &&  // pi
-                            std::abs(true_particle.pdg) != 11       // e 
-                        ) continue; // why are we selecting only charged primaries?
-                        
-                        /* L’idea e’ mettere soglia su quello che deposita energia…. 
-                         * Quindi tutto quello che sia carico e che di solito abbiamo
-                         * Per dire in qualche punto ci deve essere anche una soglia 
-                         * sui fotoni singoli, per cui se hanno troppa energia depositata 
-                         * possono essere identificati (non avevamo messo soglia sui pi0 
-                         * pero si sui due fotoni del pi0)
-                        */
+                            if (parent_g4id != prim.G4ID) continue;
+                            if (
+                                std::abs(true_particle.pdg) != 13   &&  // mu
+                                std::abs(true_particle.pdg) != 2212 &&  // p
+                                std::abs(true_particle.pdg) != 211  &&  // pi
+                                std::abs(true_particle.pdg) != 11       // e 
+                            ) continue; // why are we selecting only charged primaries?
 
-                        if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
-                    } // loop spill->true_particles
+                            /* L’idea e’ mettere soglia su quello che deposita energia…. 
+                             * Quindi tutto quello che sia carico e che di solito abbiamo
+                             * Per dire in qualche punto ci deve essere anche una soglia 
+                             * sui fotoni singoli, per cui se hanno troppa energia depositata 
+                             * possono essere identificati (non avevamo messo soglia sui pi0 
+                             * pero si sui due fotoni del pi0)
+                            */
+
+                            if (!in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)) return false;
+                        } // loop spill->true_particles
+                    } // has daughters
                 } // loop slc.truth.prim
             } // loop spill->slc
             return true;
@@ -702,17 +751,7 @@ namespace cuts {
         }); // const ana::Cut slice_1mu_only
     } // namespace truth
 
-    namespace reco { 
-        const ana::Cut slice_at_least_mu ([](const caf::SRSliceProxy *slice) -> bool {
-            /* We should at least found one muon, otherwise something bad happens
-            */
-
-            // Using dist_cut = 10 [cm]
-            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut); 
-            if (ipfp_muon == -1) return false; // no muon found ahaha
-            return true;
-        }); // const ana::Cut slice_at_least_mu
-
+    namespace reco {
         const ana::Cut slice_all_trk_contained ([](const caf::SRSliceProxy *slice) -> bool {
             for (auto const& pfp: slice->reco.pfp) {
                 if (std::isnan(pfp.trk.start.x) || std::isnan(pfp.trk.end.x) || std::isnan(pfp.trk.len)) 
@@ -873,7 +912,7 @@ namespace vars {
             
             double p_mu_tot = std::sqrt(p_mu_x * p_mu_x + p_mu_y * p_mu_y + p_mu_z * p_mu_z); // [GeV]
             
-            E_mu = 1000. * std::sqrt(p_mu_tot * p_mu_tot + std::pow(particle_data::masses::muon, 2) / (1000. * 1000.));
+            E_mu = particle_data::GeV * std::sqrt(p_mu_tot * p_mu_tot + std::pow(particle_data::masses::muon, 2) / (particle_data::GeV * particle_data::GeV));
 
             for (std::size_t ipfp = 0; ipfp < slice.reco.npfp; ++ipfp) {
                 if (int(ipfp) == ipfp_mu)
@@ -887,13 +926,13 @@ namespace vars {
                     );
                     E_p += std::sqrt(
                         std::pow(particle_data::masses::proton, 2) + 
-                        std::pow(start_mom.Mag() * 1000, 2)
+                        std::pow(start_mom.Mag() * particle_data::GeV, 2)
                     ) - particle_data::masses::proton;
                     // ipfp_pro = ipfp;
                 } // this pfp is proton-like
             } // loop pfp
 
-            return (E_mu + E_p) / 1000.;
+            return (E_mu + E_p) / particle_data::GeV;
         } // double neutrino_energy_Np
 
         double neutrino_pT_Np (const caf::Proxy<caf::SRSlice> &islc, int ipfp_mu, int dist_cut) {
@@ -1238,19 +1277,38 @@ namespace vars {
 } // namespace vars
 
 namespace var_utils {
-    particle_data::int_type classification_type (const caf::SRSpillProxy *spill, const caf::SRSliceProxy *slice) {
+    particle_data::int_type_t classification_type (const caf::SRSpillProxy *spill, const caf::SRSliceProxy *slice) {
         /* Utility to help classify different true interaction types
-         *  - 1µNp are particle_data::int_type::true_visible_1muNp
-         *  - 1µ1p are particle_data::int_type::true_visible_1mu1p
+         *  - 1µNp are particle_data::int_type_t::true_visible_1muNp
+         *  - 1µ1p are particle_data::int_type_t::true_visible_1mu1p
          *  - unclassified
         */
 
+       
+       if (std::isnan(slice->vertex.x) || std::isnan(slice->vertex.y) || std::isnan(slice->vertex.z))
+       return particle_data::int_type_t::unclassified;
+       
+       if (std::isnan(slice->truth.position.x) || std::isnan(slice->truth.position.y) || std::isnan(slice->truth.position.z))
+       return particle_data::int_type_t::unclassified;
+       
+       if (slice->truth.index < 0)
+       return particle_data::int_type_t::unclassified;
+       
+       if (!(
+           std::abs(slice->truth.pdg) == 14            && 
+           slice->truth.iscc                           && 
+           !std::isnan(slice->truth.position.x)        && 
+           !std::isnan(slice->truth.position.y)        && 
+           !std::isnan(slice->truth.position.z)        &&
+           cuts::in_FV (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z) &&
+           cuts::in_active (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z)
+        )) return particle_data::int_type_t::unclassified;
+        
         int num_protons_above50 = 0;
         int num_muons = 0;
         double length_muon = 0;
         double dep_E = 0;
-
-        int G4ID_parent;
+ 
         int use_plane = 2;
 
         for (auto const& prim: slice->truth.prim) {
@@ -1260,25 +1318,23 @@ namespace var_utils {
             if (prim.G4ID < 0)
                 continue;
             
-            if (prim.cryostat < 0)
-                continue;
+            // if (prim.cryostat < 0)
+            //     continue;
 
             if (std::abs(prim.pdg) == 211) {
-                return particle_data::int_type::unclassified;
+                return particle_data::int_type_t::unclassified;
             } // found charged pion, returning
 
             /* Looking at neutral pions: trickier
              * Reject if any of daughter photon is > 25 MeV
             */ 
-            if (std::abs(prim.pdg) == 111 && prim.daughters.size() >= 1) {
+            if (std::abs(prim.pdg) == 111 && prim.daughters.size() > 0) {
                 for (auto const& true_particle: spill->true_particles) {
-                    G4ID_parent = true_particle.parent;
-
                     if (
-                        G4ID_parent == prim.G4ID && std::abs(true_particle.pdg) == 22 &&
-                        true_particle.plane[prim.cryostat][use_plane].visE * 1000 > particle_data::minimum_gamma_MeV
+                        true_particle.parent == prim.G4ID && std::abs(true_particle.pdg) == 22 &&
+                        true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV > particle_data::minimum_gamma_MeV
                     ){
-                        return particle_data::int_type::unclassified;
+                        return particle_data::int_type_t::unclassified;
                     }
                 } // loop spill->true_particles
             } // neutral pion found
@@ -1289,29 +1345,28 @@ namespace var_utils {
             } // found muon
             
             if (std::abs(prim.pdg) == 22) {
-                if (prim.daughters.size() >= 1) {
+                if (prim.daughters.size() > 0) {
                     for (auto const& true_particle: spill->true_particles) {
-                        G4ID_parent = true_particle.parent;
-                        if (G4ID_parent == prim.G4ID)
-                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * 1000;
+                        if (true_particle.parent == prim.G4ID)
+                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
                     } // loop trough true_particles
                 } // photon has daughters
-                dep_E += prim.plane[prim.cryostat][use_plane].visE * 1000;
+                dep_E += prim.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
             } // found photon
 
             // if primary is photon with dep energy > 25 MeV skip...
             if (std::abs(prim.pdg) == 22 && dep_E > particle_data::minimum_gamma_MeV)
-                return particle_data::int_type::unclassified;
+                return particle_data::int_type_t::unclassified;
 
             if (std::abs(prim.pdg) == 2212) {
-                if (prim.daughters.size() >= 1) {
+                if (prim.daughters.size() > 0) {
                     for(auto const& true_particle: spill->true_particles) {
-                        G4ID_parent = true_particle.parent;
-                        if (G4ID_parent == prim.G4ID) 
-                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * 1000;
+                        if (true_particle.parent == prim.G4ID) {
+                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
+                        }
                     } // loop trough true_particles
                 } // proton has daughters
-                dep_E += prim.plane[prim.cryostat][use_plane].visE * 1000;
+                dep_E += prim.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
             } // found proton
 
             if (std::abs(prim.pdg) == 2212 && dep_E > 50.0)
@@ -1323,23 +1378,23 @@ namespace var_utils {
         if (
             num_muons == 1 && num_protons_above50 == 1 && 
             length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
-        ) return particle_data::int_type::true_visible_1mu1p;
+        ) return particle_data::int_type_t::true_visible_1mu1p;
 
         if (
             num_muons == 1 && num_protons_above50 > 1 && 
             length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
-        ) return particle_data::int_type::true_visible_1muNp;
+        ) return particle_data::int_type_t::true_visible_1muNp;
 
-        return particle_data::int_type::unclassified;
+        return particle_data::int_type_t::unclassified;
     } // int classification_type
 
-    particle_data::int_type classification_type_MC (
+    particle_data::int_type_t classification_type_MC (
         const caf::SRSpillProxy *spill, const caf::Proxy<caf::SRTrueInteraction> &nu
     ) {
         /* Utility to help classify different true interaction types
-         *  - 1µNp are particle_data::int_type::true_visible_1muNp
-         *  - 1µ1p are particle_data::int_type::true_visible_1mu1p
-         *  - all others are particle_data::int_type::unclassified
+         *  - 1µNp are particle_data::int_type_t::true_visible_1muNp
+         *  - 1µ1p are particle_data::int_type_t::true_visible_1mu1p
+         *  - all others are particle_data::int_type_t::unclassified
         */
 
         int num_protons_above50 = 0;
@@ -1361,7 +1416,7 @@ namespace var_utils {
                 continue;
 
             if (std::abs(prim.pdg) == 211) {
-                return particle_data::int_type::unclassified;
+                return particle_data::int_type_t::unclassified;
             } // found charged pion, returning
 
             /* Looking at neutral pions: trickier
@@ -1373,9 +1428,9 @@ namespace var_utils {
 
                     if (
                         G4ID_parent == prim.G4ID && std::abs(true_particle.pdg) == 22 &&
-                        true_particle.plane[prim.cryostat][use_plane].visE * 1000 > particle_data::minimum_gamma_MeV
+                        true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV > particle_data::minimum_gamma_MeV
                     ){
-                        return particle_data::int_type::unclassified;
+                        return particle_data::int_type_t::unclassified;
                     }
                 } // loop spill->true_particles
             } // neutral pion found
@@ -1390,25 +1445,25 @@ namespace var_utils {
                     for (auto const& true_particle: spill->true_particles) {
                         G4ID_parent = true_particle.parent;
                         if (G4ID_parent == prim.G4ID)
-                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * 1000;
+                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
                     } // loop trough true_particles
                 } // photon has daughters
-                dep_E += prim.plane[prim.cryostat][use_plane].visE * 1000;
+                dep_E += prim.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
             } // found photon
 
             // if primary is photon with dep energy > 25 MeV skip...
             if (std::abs(prim.pdg) == 22 && dep_E > particle_data::minimum_gamma_MeV)
-                return particle_data::int_type::unclassified;
+                return particle_data::int_type_t::unclassified;
 
             if (std::abs(prim.pdg) == 2212) {
                 if (prim.daughters.size() >= 1) {
                     for(auto const& true_particle: spill->true_particles) {
                         G4ID_parent = true_particle.parent;
                         if (G4ID_parent == prim.G4ID) 
-                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * 1000;
+                            dep_E += true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
                     } // loop trough true_particles
                 } // proton has daughters
-                dep_E += prim.plane[prim.cryostat][use_plane].visE * 1000;
+                dep_E += prim.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
             } // found proton
 
             if (std::abs(prim.pdg) == 2212 && dep_E > 50.0)
@@ -1420,14 +1475,14 @@ namespace var_utils {
         if (
             num_muons == 1 && num_protons_above50 == 1 && 
             length_muon > 50 && cuts::all_trk_contained_MC(spill, nu)
-        ) return particle_data::int_type::true_visible_1mu1p;
+        ) return particle_data::int_type_t::true_visible_1mu1p;
 
         if (
             num_muons == 1 && num_protons_above50 > 1 && 
             length_muon > 50 && cuts::all_trk_contained_MC(spill, nu)
-        ) return particle_data::int_type::true_visible_1muNp;
+        ) return particle_data::int_type_t::true_visible_1muNp;
 
-        return particle_data::int_type::unclassified;
+        return particle_data::int_type_t::unclassified;
     } // int classification_type
 } // namespace var_utils
 

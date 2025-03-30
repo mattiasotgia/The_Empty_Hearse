@@ -9,7 +9,7 @@
 
 namespace cuts {
     namespace truth {
-        using int_type_t = particle_data::int_type;
+        using int_type_t = particle_data::int_type_t;
         const ana::SpillCut spill_1muNp_MC ([](const caf::SRSpillProxy *spill) -> bool {
             for (auto const& nu: spill->mc.nu) {
                 if (var_utils::classification_type_MC(spill, nu) == int_type_t::true_visible_1muNp) 
@@ -34,7 +34,7 @@ namespace cuts {
 
 namespace no_pid {
 
-    using int_type_t = particle_data::int_type;
+    using int_type_t = particle_data::int_type_t;
     template<class T, class A>
     const T make_spill_from_slice (
         std::function<A(const caf::SRSliceProxy*, const int&)> nopid_slice_var, 
