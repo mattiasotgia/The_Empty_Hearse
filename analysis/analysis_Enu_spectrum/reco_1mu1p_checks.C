@@ -10,7 +10,12 @@
 #include "martero_util.h"
 
 using level_t = logger::level;
-using cut_type_t = var_utils::cut_type;
+using cut_type_t = var_utils::cut_type_t;
+
+#define SPILLVAR(_def, _var, _reco, _what, _true) \
+    var_utils::make_spill_from_slice<ana::SpillVar, ana::Var, double>(_def, _var, _reco, _what, _true)
+#define SPILLMULTIVAR(_def, _var, _reco, _what, _true) \
+    var_utils::make_spill_from_slice<ana::SpillMultiVar, ana::MultiVar, std::vector<double>>(_def, _var, _reco, _what, _true)
 
 const ana::Cut def_cut = (
     // ana::kNoCut
@@ -49,8 +54,8 @@ const ana::SpillVar count_events_mattia (
     });
 }
 
-const ana::SpillVar count_slices = count_events_mattia (vars::truth::slice_neutrino_dE,                 def_cut, local_cut_type, def_cut_truth, true);
-const ana::SpillVar spill_dE     = var_utils::make_spill_from_slice (vars::truth::slice_neutrino_dE,    def_cut, local_cut_type, def_cut_truth);
+const ana::SpillVar count_slices = count_events_mattia (vars::truth::slice_neutrino_dE, def_cut, local_cut_type, def_cut_truth, true);
+const ana::SpillVar spill_dE = SPILLVAR (-9999, vars::truth::slice_neutrino_dE, def_cut, local_cut_type, def_cut_truth);
 
 void reco_1mu1p_checks() {
 

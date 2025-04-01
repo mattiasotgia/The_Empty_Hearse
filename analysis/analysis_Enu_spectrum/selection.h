@@ -10,6 +10,7 @@
 #include "TFile.h"
 #include "TVector3.h"
 #include "TProfile.h"
+#include "TMath.h"
 
 #include "helper.h"
 
@@ -28,6 +29,18 @@ namespace particle_data {
         true_visible_1muNp,
         true_visible_1mu1p,
         unclassified
+    };
+
+    enum particle_t {
+        proton,
+        pion,
+        shower,
+        muon,
+        electron,
+        not_primary,
+        too_far,
+        low_energy,
+        undefined
     };
 
     double minimum_gamma_MeV = 25.;
@@ -53,10 +66,6 @@ namespace cuts {
         }); // const ana::Cut slice_at_least_mu
     }
 }
-
-// std::vector<double> events_in_maria = {
-//     12829, 12833, 6312, 6323, 6334, 2925, 16068, 13478, 16606, 10465, 679, 1458, 13842, 13844, 3382, 2313, 2749, 14076, 12951, 12957, 12986, 3499, 10348, 2197, 9105, 9140, 11716, 11718, 16254, 16270, 16292, 16294, 9565, 14916, 9360, 3837, 10616, 8309, 8327, 8344, 4999, 11406, 11422, 8206, 7839, 4037, 6257, 6272, 8895, 8896, 9656, 6612, 9956, 1088, 5082, 9036, 6505, 6511, 6546, 5601, 5640, 12354, 1101, 13718, 13741, 2583, 7179, 17087, 1307, 5814, 11682, 11689, 4827, 4831, 4833, 4849, 14162, 15137, 14663, 1021, 14134, 14141, 4889, 4891, 7082, 4103, 4104, 4106, 4143, 4145, 4148, 7433, 7443, 16238, 11507, 11543, 805, 165, 183, 188, 16377, 16398, 5253, 7474, 12861, 15563, 15746, 16839, 4758, 13798, 4444, 2275, 2295, 8408, 3573, 16320, 16330, 6561, 6580, 8172, 8184, 8198, 9511, 9532, 9533, 4505, 4543, 4545, 6967, 6976, 6985, 4741, 8722, 9318, 9349, 1657, 1697, 14800, 6445, 10420, 2088, 8288, 12207, 11081, 4575, 15453, 16738, 10367, 10381, 11810, 11820, 851, 856, 11273, 11277, 6734, 13516, 13521, 13532, 13544, 7378, 1175, 16193, 965, 5330, 11913, 11933, 7791, 14029, 14035, 4497, 15002, 15016, 3639, 1713, 1725, 1730, 1745, 10883, 3202, 2652, 2670, 8953, 8968, 14458, 14470, 14490, 15401, 15414, 15415, 15428, 8035, 8109, 13163, 12411, 12428, 4223, 4233, 2856, 2896, 6078, 4601, 4627, 4634, 14624, 14641, 13213, 906, 15963, 15272, 15296, 503, 510, 8573, 414, 9261, 9280, 16666, 16694, 13268, 2467, 3278, 3299, 13037, 3755, 3783, 13134, 7263, 7270, 2546, 14994, 12756, 12783, 8654, 8666, 9434, 9473, 5677, 17282, 7510, 7534, 1988, 7969, 5564, 17459, 17470, 13915, 6947, 5983, 17234, 5216, 17035, 16537, 16546, 3171, 5869, 16938, 14444, 12671, 12677, 13605, 3919, 6845, 11862, 16562, 16575, 9721, 9747, 10082, 10094, 14556, 14566, 11951, 11966, 11993, 12118, 12016, 16987, 2965, 15651, 7015, 1601, 1623, 1587, 12914, 12938 
-// };
 
 namespace var_utils {
 
@@ -86,7 +95,7 @@ namespace var_utils {
     auto dedx_range_pi  = (TProfile *)file->Get("dedx_range_pi");
     auto dedx_range_mu  = (TProfile *)file->Get("dedx_range_mu");
 
-    enum cut_type {
+    enum cut_type_t {
         RECO,
         TRUE_1muN1p,
         TRUE_1muNp,
@@ -99,36 +108,38 @@ namespace var_utils {
     };
 
     particle_data::int_type_t classification_type (const caf::SRSpillProxy*, const caf::SRSliceProxy*);
-    const ana::SpillVar make_spill_from_slice (
-        const ana::Var &slice_var, 
+    template<class R, class T, class A>
+    const R make_spill_from_slice (
+        A __def_ret, 
+        const T &slice_var, 
         const ana::Cut &reco_cut = ana::kNoCut,  
-        cut_type what_to_cut_on = cut_type::RECO, 
+        cut_type_t what_to_cut_on = cut_type_t::RECO, 
         const ana::Cut &truth_cut = ana::kNoCut
     ) {
-        return ana::SpillVar([=](const caf::SRSpillProxy *spill) -> double {
+        return R([=](const caf::SRSpillProxy *spill) -> A {
             int selected_slices = 0;
-            double slice_value = -9999;
+            A slice_value = __def_ret;
             bool debug = false;
     
             for (auto const& slice: spill->slc) {
     
-                if (what_to_cut_on == cut_type::RECO && !reco_cut(&slice)) {
+                if (what_to_cut_on == cut_type_t::RECO && !reco_cut(&slice)) {
                     if (debug) std::cout << "The mode was RECO but the cuts rejected this event" << std::endl;
                     continue;
                 } 
-                if (what_to_cut_on == cut_type::TRUE_1muN1p && !(
+                if (what_to_cut_on == cut_type_t::TRUE_1muN1p && !(
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp && truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
                     continue;
                 }
-                if (what_to_cut_on == cut_type::TRUE_1mu1p && !(
+                if (what_to_cut_on == cut_type_t::TRUE_1mu1p && !(
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p && truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
                     continue;
                 }
-                if (what_to_cut_on == cut_type::TRUE_1muNp && !((
+                if (what_to_cut_on == cut_type_t::TRUE_1muNp && !((
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p || 
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp) && 
                     truth_cut(&slice)
@@ -136,7 +147,7 @@ namespace var_utils {
                     if (debug) std::cout << "The mode was TRUE_1µN1p but the cuts rejected this event" << std::endl;
                     continue;
                 }
-                if (what_to_cut_on == cut_type::BOTH_1muNp && !(
+                if (what_to_cut_on == cut_type_t::BOTH_1muNp && !(
                     reco_cut(&slice) && truth_cut(&slice) && 
                     (classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp || 
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p)
@@ -144,14 +155,14 @@ namespace var_utils {
                     if (debug) std::cout << "The mode was BOTH_1µNp (N>=1) but the cuts rejected this event" << std::endl;
                     continue;
                 }
-                if (what_to_cut_on == cut_type::BOTH_1muN1p && !(
+                if (what_to_cut_on == cut_type_t::BOTH_1muN1p && !(
                     reco_cut(&slice) && truth_cut(&slice) || 
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1µN1p (N>1) but the cuts rejected this event" << std::endl;
                     continue;
                 }
-                if (what_to_cut_on == cut_type::BOTH_1mu1p && !(
+                if (what_to_cut_on == cut_type_t::BOTH_1mu1p && !(
                     reco_cut(&slice) && truth_cut(&slice) && 
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p
                 )) {
@@ -338,7 +349,7 @@ namespace var_utils {
         return ipfp_mu;
     } // int find_muon
 
-    int id_pfp (const caf::SRSliceProxy &slice, int ipfp, int dist_cut) {
+    particle_data::particle_t id_pfp (const caf::SRSliceProxy &slice, int ipfp, int dist_cut) {
         /* This utility select the correct particle of the event slice
          * return 1 PROTONS
          * return 2 PIONS
@@ -350,14 +361,14 @@ namespace var_utils {
         rec_vtx.SetXYZ(slice.vertex.x, slice.vertex.y, slice.vertex.z);
 
         if (!(slice.reco.pfp[ipfp].parent_is_primary))
-            return 9;
+            return particle_data::particle_t::not_primary;
 
         // Sanity checks :)
         if (
             std::isnan(slice.reco.pfp[ipfp].trk.start.x)    || 
             std::isnan(slice.reco.pfp[ipfp].trk.end.x)      || 
             std::isnan(slice.reco.pfp[ipfp].trk.len)
-        ) return 9;
+        ) return particle_data::particle_t::undefined;
         
         // There is always a muon, for a 1mu1p we need 2 tracks - 1 muon = 1 only proton with threshold
         // if (int(ipfp)==ipfp_mu) continue;
@@ -377,7 +388,7 @@ namespace var_utils {
         // if (min_dist > 50.0) continue;
         // if (min_dist > 10.0) return 9;
         if (min_dist > 50.0)
-            return 9;
+            return particle_data::particle_t::too_far;
 
         // int use_plane = slice.reco.pfp[ipfp].trk.calo[2].nhit>slice.reco.pfp[ipfp].trk.calo[1].nhit ? 2:1;
         int use_plane = 2;
@@ -398,14 +409,14 @@ namespace var_utils {
                 std::isnan(slice.reco.pfp[ipfp].trk.start.x)    || 
                 std::isnan(slice.reco.pfp[ipfp].trk.end.x)      || 
                 std::isnan(slice.reco.pfp[ipfp].trk.len)
-            ) return 9;
+            ) return particle_data::particle_t::undefined;
 
             if (
                 std::isnan(slice.reco.pfp[ipfp].trk.start.y) || 
                 std::isnan(slice.reco.pfp[ipfp].trk.start.z) || 
                 std::isnan(slice.reco.pfp[ipfp].trk.end.y)   || 
                 std::isnan(slice.reco.pfp[ipfp].trk.end.z)
-            ) return 9;
+            ) return particle_data::particle_t::undefined;
 
             // Skip low energy tagged pions
             TVector3 start_mom_V3;
@@ -420,9 +431,11 @@ namespace var_utils {
             if (
                 chi2_values.proton >= 100           && 
                 (rec_vtx - start).Mag() < dist_cut  && 
-                std::sqrt ( std::pow(particle_data::masses::pion, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) ) - particle_data::masses::pion >= 25.0 && 
+                std::sqrt ( 
+                    std::pow(particle_data::masses::pion, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) 
+                ) - particle_data::masses::pion >= 25.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary
-            )  return 2;
+            )  return particle_data::particle_t::pion;
 
             // Skip low energy protons
             if (chi2_values.proton < 100)
@@ -435,9 +448,11 @@ namespace var_utils {
             if (
                 chi2_values.proton < 100            && 
                 (rec_vtx - start).Mag() < dist_cut  && 
-                std::sqrt ( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) ) - particle_data::masses::proton >= 50.0 && 
+                std::sqrt ( 
+                    std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) 
+                ) - particle_data::masses::proton >= 50.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary
-            ) return 1;
+            ) return particle_data::particle_t::proton;
 
         }
 
@@ -451,10 +466,12 @@ namespace var_utils {
                 );
 
                 if (
-                    std::sqrt( std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3_2.Mag() * particle_data::GeV, 2)) - particle_data::masses::proton >= 50.0 && 
+                    std::sqrt( 
+                        std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3_2.Mag() * particle_data::GeV, 2)
+                    ) - particle_data::masses::proton >= 50.0 && 
                     (rec_vtx - start).Mag() < dist_cut && 
                     slice.reco.pfp[ipfp].parent_is_primary
-                ) return 1;
+                ) return particle_data::particle_t::proton;
             }
 
             if (!(slice.reco.pfp[ipfp].trackScore >= 0.4 && chi2_values.proton < 100)) {
@@ -463,14 +480,16 @@ namespace var_utils {
                 int use_plane2 = 2;
 
                 if (std::isnan(slice.reco.pfp[ipfp].shw.plane[use_plane2].energy))
-                    return 9;
+                    return particle_data::particle_t::undefined;
                 if (slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV < 25.0)
-                    return 9;
-                if (slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV > 25.0 && slice.reco.pfp[ipfp].parent_is_primary)
-                    return 3;
+                    return particle_data::particle_t::low_energy;
+                if (
+                    slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV > 25.0 && 
+                    slice.reco.pfp[ipfp].parent_is_primary)
+                    return particle_data::particle_t::shower;
             }
         }
-        return 9;
+        return particle_data::particle_t::undefined;
     } // int id_pfp
 } // namespace var_utils
 
@@ -739,9 +758,9 @@ namespace cuts {
                 if (int(ipfp) == ipfp_muon)
                     continue;
 
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 1) num_protons++;
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 2) num_pions++;
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 3) num_showers++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
             } // loop pfp
 
             return num_protons > 1 && num_pions == 0 && num_showers == 0;
@@ -759,9 +778,9 @@ namespace cuts {
                 if (int(ipfp) == ipfp_muon)
                     continue;
 
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 1) num_protons++;
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 2) num_pions++;
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == 3) num_showers++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
             } // loop pfp
 
             return num_protons == 1 && num_pions == 0 && num_showers == 0;
@@ -822,7 +841,7 @@ namespace vars {
             for (std::size_t ipfp = 0; ipfp < slice.reco.npfp; ++ipfp) {
                 if (int(ipfp) == ipfp_mu)
                     continue;
-                if (var_utils::id_pfp(slice, ipfp, dist_emucut) == 1) {
+                if (var_utils::id_pfp(slice, ipfp, dist_emucut) == particle_data::particle_t::proton) {
                     TVector3 start_mom;
                     start_mom.SetXYZ(
                         slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.x, 
@@ -854,7 +873,7 @@ namespace vars {
             for (std::size_t ipfp = 0; ipfp < islc.reco.npfp; ++ipfp) {
                 if (int(ipfp) == ipfp_mu)
                     continue;
-                if (var_utils::id_pfp(islc, ipfp, dist_cut) == 1) {
+                if (var_utils::id_pfp(islc, ipfp, dist_cut) == particle_data::particle_t::proton) {
                     p_p_x += (islc.reco.pfp[ipfp].trk.rangeP.p_proton) * islc.reco.pfp[ipfp].trk.dir.x;
                     p_p_y += (islc.reco.pfp[ipfp].trk.rangeP.p_proton) * islc.reco.pfp[ipfp].trk.dir.y;
                     p_p_z += (islc.reco.pfp[ipfp].trk.rangeP.p_proton) * islc.reco.pfp[ipfp].trk.dir.z;
@@ -941,7 +960,7 @@ namespace vars {
         const ana::Var slice_pid_proton_reco_length ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length)
                     length = slice->reco.pfp[ipfp].trk.len;
             } // pfp loops
@@ -952,7 +971,7 @@ namespace vars {
         const ana::Var slice_pid_proton_true_length ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.truth.p.length>length)
                     length = slice->reco.pfp[ipfp].trk.truth.p.length;
             } // pfp loops
@@ -964,7 +983,7 @@ namespace vars {
             double length = -1;
             double ratio = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length)
                     length = slice->reco.pfp[ipfp].trk.len;
                     ratio = slice->reco.pfp[ipfp].trk.len / slice->reco.pfp[ipfp].trk.truth.p.length;
@@ -977,7 +996,7 @@ namespace vars {
             double length = -1;
             int ipfp_proton = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -992,7 +1011,7 @@ namespace vars {
             double length = -1;
             int ipfp_proton = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1014,7 +1033,7 @@ namespace vars {
             double length = -1;
             int ipfp_proton = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1041,7 +1060,7 @@ namespace vars {
             double length = -1;
             int ipfp_proton = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1132,7 +1151,7 @@ namespace vars {
             double length = -1;
             int ipfp_proton = -1;
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
-                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != 1) continue;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1144,9 +1163,76 @@ namespace vars {
             double E_dep_true = slice->reco.pfp.at(ipfp_proton).trk.truth.p.startE - slice->reco.pfp.at(ipfp_proton).trk.truth.p.endE;
             double E_true_in_hits = slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.energy/3. * slice->reco.pfp.at(ipfp_proton).trk.truth.bestmatch.energy_completeness;
 
-            return E_true_in_hits / E_dep_true;
-
+            return E_true_in_hits / E_dep_true;    
         });
+
+        const ana::Var slice_CT3D_rangeP_muon_proton ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp)
+            {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton)
+                continue;
+                if (slice->reco.pfp[ipfp].trk.len > length)
+                {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+            
+            if (ipfp_muon == -1 || ipfp_proton == -1)
+                return -9999;
+            
+            TVector3 muon_p, proton_p;
+            muon_p.SetXYZ(
+                slice->reco.pfp.at(ipfp_muon).trk.rangeP.p_muon * slice->reco.pfp.at(ipfp_muon).trk.dir.x,
+                slice->reco.pfp.at(ipfp_muon).trk.rangeP.p_muon * slice->reco.pfp.at(ipfp_muon).trk.dir.y,
+                slice->reco.pfp.at(ipfp_muon).trk.rangeP.p_muon * slice->reco.pfp.at(ipfp_muon).trk.dir.z
+            );
+            proton_p.SetXYZ(
+                slice->reco.pfp.at(ipfp_proton).trk.rangeP.p_proton * slice->reco.pfp.at(ipfp_proton).trk.dir.x,
+                slice->reco.pfp.at(ipfp_proton).trk.rangeP.p_proton * slice->reco.pfp.at(ipfp_proton).trk.dir.y,
+                slice->reco.pfp.at(ipfp_proton).trk.rangeP.p_proton * slice->reco.pfp.at(ipfp_proton).trk.dir.z
+            );
+            return TMath::Cos(muon_p.Angle(proton_p));
+        }); // const ana::Var slice_CT3D_muon_leading_proton
+
+        const ana::Var slice_CT3D_trueP_muon_proton ([](const caf::SRSliceProxy *slice) -> double {
+            double length = -1;
+            int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp)
+            {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton)
+                continue;
+                if (slice->reco.pfp[ipfp].trk.len > length)
+                {
+                    length = slice->reco.pfp[ipfp].trk.len;
+                    ipfp_proton = ipfp;
+                }
+            } // pfp loops
+            
+            if (ipfp_muon == -1 || ipfp_proton == -1)
+                return -9999;
+            
+            TVector3 muon_p, proton_p;
+            muon_p.SetXYZ(
+                slice->reco.pfp.at(ipfp_muon).trk.truth.p.startp.x,
+                slice->reco.pfp.at(ipfp_muon).trk.truth.p.startp.y,
+                slice->reco.pfp.at(ipfp_muon).trk.truth.p.startp.z
+            );
+            proton_p.SetXYZ(
+                slice->reco.pfp.at(ipfp_proton).trk.truth.p.startp.x,
+                slice->reco.pfp.at(ipfp_proton).trk.truth.p.startp.y,
+                slice->reco.pfp.at(ipfp_proton).trk.truth.p.startp.z
+            );
+            return TMath::Cos(muon_p.Angle(proton_p));
+        }); // const ana::Var slice_CT3D_trueP_muon_leading_proton
+
+
     } // namespace reco
 
     namespace truth {
