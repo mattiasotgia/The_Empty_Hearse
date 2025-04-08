@@ -102,15 +102,16 @@ void reco_1muNp() {
     ana::SpectrumLoader loader_cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_reco_ana_stage1tocaf_flatcafs");
     std::unique_ptr<ana::Tree> cheated(new ana::Tree(
         "cheated", 
-        {"reco_E", "true_E", "delta_E", "reco_pT"},                 ////< 4 labels 
+        {"event", "reco_E", "true_E", "delta_E", "reco_pT"},                 ////< 4 labels 
         loader_cheated, 
-        {spill_reco_E, spill_true_E, spill_dE, spill_reco_pT},      ////< 4 variables
+        {event, spill_reco_E, spill_true_E, spill_dE, spill_reco_pT},      ////< 4 variables
         cheating::cut_bad_events && cuts::reco::spill_CRTPMTNeutrino
     )); 
 
     std::unique_ptr<ana::Tree> cheated_checks(new ana::Tree(
         "cheated_checks", 
         {
+            "event",
             "vertex_difference", 
             "vertex_difference_x", 
             "vertex_difference_y", 
@@ -134,6 +135,7 @@ void reco_1muNp() {
         }, 
         loader_cheated, 
         {
+            event,
             spill_vertex_difference, 
             spill_vertex_difference_x, 
             spill_vertex_difference_y, 
@@ -161,6 +163,7 @@ void reco_1muNp() {
     std::unique_ptr<ana::Tree> cheated_nopid_checks(new ana::Tree(
         "cheated_nopid_checks",
         {
+            "event",
             "vertex_difference_3D",
             "vertex_difference_x",
             "vertex_difference_y",
@@ -182,6 +185,7 @@ void reco_1muNp() {
         }, 
         loader_cheated,
         {
+            event,
             nopid_spill_vertex_difference_3D,
             nopid_spill_vertex_difference_x,
             nopid_spill_vertex_difference_y,
@@ -228,15 +232,16 @@ void reco_1muNp() {
     ana::SpectrumLoader loader_non_cheated("msotgia_v09_89_01_01p03_BNB_production_non_cheated_reco_ana_stage1tocaf_flatcafs");
     std::unique_ptr<ana::Tree> non_cheated(new ana::Tree(
         "non_cheated", 
-        {"reco_E", "true_E", "delta_E", "reco_pT"}, 
+        {"event", "reco_E", "true_E", "delta_E", "reco_pT"}, 
         loader_non_cheated, 
-        {spill_reco_E, spill_true_E, spill_dE, spill_reco_pT},
+        {event, spill_reco_E, spill_true_E, spill_dE, spill_reco_pT},
 	    cheating::cut_bad_events && cuts::reco::spill_CRTPMTNeutrino
     )); 
 
     std::unique_ptr<ana::Tree> non_cheated_checks(new ana::Tree(
         "non_cheated_checks", 
         {
+            "event",
             "vertex_difference", 
             "vertex_difference_x", 
             "vertex_difference_y", 
@@ -260,6 +265,7 @@ void reco_1muNp() {
         }, 
         loader_non_cheated, 
         {
+            event,
             spill_vertex_difference, 
             spill_vertex_difference_x, 
             spill_vertex_difference_y, 
@@ -287,6 +293,7 @@ void reco_1muNp() {
     std::unique_ptr<ana::Tree> non_cheated_nopid_checks(new ana::Tree(
         "non_cheated_nopid_checks",
         {
+            "event",
             "vertex_difference_3D",
             "vertex_difference_x",
             "vertex_difference_y",
@@ -308,6 +315,7 @@ void reco_1muNp() {
         }, 
         loader_non_cheated,
         {
+            event,
             nopid_spill_vertex_difference_3D,
             nopid_spill_vertex_difference_x,
             nopid_spill_vertex_difference_y,

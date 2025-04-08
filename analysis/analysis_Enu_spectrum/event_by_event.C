@@ -118,7 +118,10 @@
 
 const ana::SpillCut valid_events ([](const caf::SRSpillProxy *spill) -> bool {
 
-    std::vector<unsigned> golden_events = {6947,  8968, 10082, 13842, 15746, 16193};
+
+    // Collinear events
+    std::vector<unsigned> golden_events = {510, 851, 1021, 1713, 3382, 4143, 5216, 7443, 8327, 8666, 8896, 9747, 11682, 12986, 14556, 16606, 16738};
+    // std::vector<unsigned> golden_events = {6947,  8968, 10082, 13842, 15746, 16193};
     // std::vector<unsigned> golden_events = {6947, 8968, 10082, 13842, 14994, 15746, 16193};
 
     // return std::find(good_events.begin(), good_events.end(), static_cast<int>(event(spill))) != good_events.end();
@@ -138,20 +141,22 @@ void event_by_event () {
     // ana::SpectrumLoader loader_cheated("/exp/icarus/data/users/msotgia/thesis/cheating-tests/test-150.3-side-by-side/caf/stage1_cheated.flat.caf.root");
     // ana::SpectrumLoader loader_nominal("/exp/icarus/data/users/msotgia/thesis/cheating-tests/test-150.3-side-by-side/caf/stage1_nominal.flat.caf.root");
 
-    ana::SpectrumLoader loader_nominal("msotgia_v09_89_01_01p03_BNB_production_non_cheated_reco_ana_stage1tocaf_flatcafs");
+    // ana::SpectrumLoader loader_nominal("msotgia_v09_89_01_01p03_BNB_production_non_cheated_reco_ana_stage1tocaf_flatcafs");
+    ana::SpectrumLoader loader_cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_reco_ana_stage1tocaf_flatcafs");
+    // ana::SpectrumLoader loader_nominal("/exp/icarus/data/users/msotgia/thesis/cheating-tests/test-single-event/caf/testing_total.flat.caf.root");
 
     // std::unique_ptr<ana::Tree> events_cheated(new ana::Tree("events_cheated", {"label"}, loader_cheated, {check_events}, ana::kNoSpillCut)); 
     // std::unique_ptr<ana::Tree> events_nominal(new ana::Tree("events_nominal", {"label"}, loader_nominal, {check_events}, ana::kNoSpillCut)); 
 
-    // std::unique_ptr<ana::Tree> events_cheated(new ana::Tree("events_cheated", {"label"}, loader_cheated, {cheating::test_variables}, ana::kNoSpillCut && valid_events)); 
-    std::unique_ptr<ana::Tree> events_nominal(new ana::Tree("events_nominal", {"label"}, loader_nominal, {cheating::test_variables}, ana::kNoSpillCut && valid_events)); 
+    std::unique_ptr<ana::Tree> events_cheated(new ana::Tree("events_cheated", {"label"}, loader_cheated, {cheating::test_variables}, ana::kNoSpillCut && valid_events)); 
+    // std::unique_ptr<ana::Tree> events_nominal(new ana::Tree("events_nominal", {"label"}, loader_nominal, {cheating::test_variables}, ana::kNoSpillCut)); 
 
     std::ofstream file;
     file.open("writer_log.txt", std::ios_base::app);
-    // file << "________________ CHEATED DATA ________________" << std::endl;
-    // loader_cheated.Go();
-    file << "________________ NOMINAL DATA ________________" << std::endl;
-    loader_nominal.Go();
+    file << "________________ CHEATED DATA ________________" << std::endl;
+    loader_cheated.Go();
+    // file << "________________ NOMINAL DATA ________________" << std::endl;
+    // loader_nominal.Go();
 
     return;
 } // void event_by_event

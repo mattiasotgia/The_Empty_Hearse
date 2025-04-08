@@ -959,8 +959,11 @@ namespace vars {
 
         const ana::Var slice_pid_proton_reco_length ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length)
                     length = slice->reco.pfp[ipfp].trk.len;
             } // pfp loops
@@ -970,8 +973,11 @@ namespace vars {
 
         const ana::Var slice_pid_proton_true_length ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.truth.p.length>length)
                     length = slice->reco.pfp[ipfp].trk.truth.p.length;
             } // pfp loops
@@ -982,8 +988,11 @@ namespace vars {
         const ana::Var slice_pid_proton_L_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             double ratio = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length)
                     length = slice->reco.pfp[ipfp].trk.len;
                     ratio = slice->reco.pfp[ipfp].trk.len / slice->reco.pfp[ipfp].trk.truth.p.length;
@@ -995,8 +1004,11 @@ namespace vars {
         const ana::Var slice_proton_hit_completeness ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1010,8 +1022,11 @@ namespace vars {
         const ana::Var slice_proton_hit_purity ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1032,8 +1047,11 @@ namespace vars {
         const ana::Var slice_proton_momentum_rangeP ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1059,8 +1077,11 @@ namespace vars {
         const ana::Var slice_proton_P_reco_true_ratio ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1150,8 +1171,11 @@ namespace vars {
         const ana::Var slice_leading_proton_R ([](const caf::SRSliceProxy *slice) -> double {
             double length = -1;
             int ipfp_proton = -1;
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             for (std::size_t ipfp=0; ipfp<slice->reco.npfp; ++ipfp) {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton) continue;
+                if (ipfp_proton == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len>length) {
                     length = slice->reco.pfp[ipfp].trk.len;
                     ipfp_proton = ipfp;
@@ -1174,7 +1198,9 @@ namespace vars {
             for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp)
             {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton)
-                continue;
+                    continue;
+                if (ipfp_proton == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len > length)
                 {
                     length = slice->reco.pfp[ipfp].trk.len;
@@ -1207,7 +1233,9 @@ namespace vars {
             for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp)
             {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton)
-                continue;
+                    continue;
+                if (ipfp_proton == ipfp_muon)
+                    continue;
                 if (slice->reco.pfp[ipfp].trk.len > length)
                 {
                     length = slice->reco.pfp[ipfp].trk.len;
@@ -1231,8 +1259,6 @@ namespace vars {
             );
             return TMath::Cos(muon_p.Angle(proton_p));
         }); // const ana::Var slice_CT3D_trueP_muon_leading_proton
-
-
     } // namespace reco
 
     namespace truth {

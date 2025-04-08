@@ -403,11 +403,50 @@ namespace cheating {
             std::cout << "This nu has nprim = " << nu.nprim << " primary particle(s) " << std::endl;
             std::cout << "The primaries pf this interaction have pdg in {" << std::endl;
 
-            for (auto const& prim: nu.prim) 
+            int iprim = 0;
+            int iprim_muon = -1;
+            double lenght_muon = -1;
+            int iprim_proton = -1;
+            double dep_E = 0;
+            for (auto const& prim: nu.prim) {
+                dep_E = 0;
                 std::cout << "\t" << prim.pdg << ", \tlenght = " << prim.length << " cm" << std::endl;
 
-            std::cout << "}" << std::endl;
+                // Search the nu interaction for 1µ1p muon proton
+                if (std::abs(prim.pdg) == 13 && prim.length > lenght_muon && prim.length > 50) {
+                    iprim_muon = iprim;
+                    lenght_muon = prim.length;
+                }
 
+                if (std::abs(prim.pdg) == 2212 && prim.daughters.size() > 0) {
+                    dep_E += prim.plane[prim.cryostat][2].visE * 1000.;
+                    for(auto const& true_particle: spill->true_particles) {
+                        if (true_particle.parent == prim.G4ID) 
+                            dep_E += true_particle.plane[prim.cryostat][2].visE * 1000.;
+                    } // loop trough true_particles
+                }
+
+                if (std::abs(prim.pdg) == 2212 && dep_E > 50)
+                    iprim_proton = iprim;
+                iprim ++;
+            }
+            
+            std::cout << "}" << std::endl;
+            
+            if (iprim_muon != -1 && iprim_proton != -1) {
+                TVector3 muon_p, proton_p;
+                muon_p.SetXYZ(
+                    nu.prim.at(iprim_muon).startp.x,
+                    nu.prim.at(iprim_muon).startp.y,
+                    nu.prim.at(iprim_muon).startp.z
+                );
+                proton_p.SetXYZ(
+                    nu.prim.at(iprim_proton).startp.x,
+                    nu.prim.at(iprim_proton).startp.y,
+                    nu.prim.at(iprim_proton).startp.z
+                );
+                std::cout << "Found true cos theta µ p = " << TMath::Cos(muon_p.Angle(proton_p)) << std::endl;
+            }
             inu ++ ;
         } // loop over nu(s)
 
@@ -440,14 +479,15 @@ namespace cheating {
 
             int iprim = 0;
             for (auto const& prim: slice.truth.prim) {
-                std::cout << "[iprim = " << iprim << "] --> " 
-                          << "pdg = " << prim.pdg << ", "
-                          << "len = " << prim.length << " cm, "
-                          << "start = (" << prim.start.x << ", " << prim.start.y << ", " << prim.start.z << "), "
-                          << "end = (" << prim.end.x << ", " << prim.end.y << ", " << prim.end.z << "), "
-                          << "plane[ipart.cryostat][2].visE = " << prim.plane[prim.cryostat][2].visE*1000 << " GeV, " 
-                          << "in_contained = " << boolean_print[in_contained(prim.end.x, prim.end.y, prim.end.z)] << ", "
-                          << std::endl;
+                if (prim.cryostat < 0) continue;  
+	                std::cout << "[iprim = " << iprim << "] --> " 
+                              << "pdg = " << prim.pdg << ", "
+                              << "len = " << prim.length << " cm, "
+                              << "start = (" << prim.start.x << ", " << prim.start.y << ", " << prim.start.z << "), "
+                              << "end = (" << prim.end.x << ", " << prim.end.y << ", " << prim.end.z << "), "
+                              << "plane[ipart.cryostat][2].visE = " << prim.plane[prim.cryostat][2].visE*1000 << " GeV, " 
+                              << "in_contained = " << boolean_print[in_contained(prim.end.x, prim.end.y, prim.end.z)] << ", "
+                              << std::endl;
                 if (prim.daughters.size() > 0) {
                     int id = 0;
                     for (auto const& true_particle: spill->true_particles) {
@@ -462,7 +502,7 @@ namespace cheating {
                                       << true_particle.end.y << ", " 
                                       << true_particle.end.z << "), "
                                       << "plane[ipart.cryostat][2].visE = " 
-                                      << true_particle.plane[prim.cryostat][2].visE*1000 << " GeV, " 
+                                      << true_particle.plane[prim.cryostat][2].visE*1000 << " MeV, " 
                                       << "in_contained = " 
                                       << boolean_print[in_contained(true_particle.end.x, true_particle.end.y, true_particle.end.z)] 
                                       << std::endl;
@@ -471,6 +511,7 @@ namespace cheating {
                 iprim++;
             }
 
+            std::cout << "Looking at reco info..." << std::endl;
             int ipfp = 0;
             for (auto const& pfp: slice.reco.pfp) {
 
