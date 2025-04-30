@@ -18,8 +18,8 @@ using cut_type_t = var_utils::cut_type_t;
 
 const ana::Cut def_cut = (
     // ana::kNoCut
-    (cuts::reco::slice_1muNp || cuts::reco::slice_1muNp) &&
-    // cuts::reco::slice_1muNp             &&
+    (cuts::reco::slice_1mu1p || cuts::reco::slice_1muNp) &&
+    // cuts::reco::slice_1mu1p             &&
     cuts::reco::slice_vtx_in_FV         &&
     cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
