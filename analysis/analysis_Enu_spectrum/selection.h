@@ -28,6 +28,18 @@ namespace particle_data {
     enum int_type_t {
         true_visible_1muNp,
         true_visible_1mu1p,
+        true_visible_1mu2p,
+        true_visible_1mu3p,
+        true_visible_1mu1pi,
+        true_visible_1mu2pi,
+        true_visible_1mu3pi,
+        true_visible_1muNpi,
+        true_visible_2mu,
+        true_visible_2p,
+        true_visible_1muShortNp,
+        true_visible_1pi1p, 
+        true_visible_1mu1p1pi0,
+        true_visible_1mu1pNpi0,
         unclassified
     };
 
@@ -100,9 +112,24 @@ namespace var_utils {
         TRUE_1muN1p,
         TRUE_1muNp,
         TRUE_1mu1p,
+        TRUE_1mu2p,
+        TRUE_1mu3p,
         BOTH_1muN1p,
         BOTH_1muNp,
         BOTH_1mu1p,
+        BOTH_1mu2p,
+        BOTH_1mu3p,
+        BOTH_1muN3p,
+        BOTH_1mu1pi,
+        BOTH_1mu2pi,
+        BOTH_1mu3pi,
+        BOTH_1muNpi,
+        BOTH_2mu,
+        BOTH_2p,
+        BOTH_1muShortNp,
+        BOTH_1pi1p,
+        BOTH_1mu1p1pi0,
+        BOTH_1mu1pNpi0,
         MC_1muNp,
         MC_1mu1p
     };
@@ -123,7 +150,7 @@ namespace var_utils {
     
             for (auto const& slice: spill->slc) {
     
-                if (what_to_cut_on == cut_type_t::RECO && !reco_cut(&slice)) {
+                if (what_to_cut_on == cut_type_t::RECO && !(reco_cut(&slice) && truth_cut(&slice))) {
                     if (debug) std::cout << "The mode was RECO but the cuts rejected this event" << std::endl;
                     continue;
                 } 
@@ -137,6 +164,18 @@ namespace var_utils {
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p && truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                if (what_to_cut_on == cut_type_t::TRUE_1mu2p && !(
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p && truth_cut(&slice)
+                )) {
+                    if (debug) std::cout << "The mode was TRUE_1µ2p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                if (what_to_cut_on == cut_type_t::TRUE_1mu3p && !(
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p && truth_cut(&slice)
+                )) {
+                    if (debug) std::cout << "The mode was TRUE_1µ3p but the cuts rejected this event" << std::endl;
                     continue;
                 }
                 if (what_to_cut_on == cut_type_t::TRUE_1muNp && !((
@@ -169,6 +208,113 @@ namespace var_utils {
                     if (debug) std::cout << "The mode was BOTH_1mu1p but the cuts rejected this event" << std::endl;
                     continue;
                 }
+                if (what_to_cut_on == cut_type_t::BOTH_1mu2p && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu2p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                if (what_to_cut_on == cut_type_t::BOTH_1mu3p && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu3p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                if (what_to_cut_on == cut_type_t::BOTH_1muN3p && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp &&
+                    classification_type(spill, &slice) != particle_data::int_type_t::true_visible_1mu3p &&
+                    classification_type(spill, &slice) != particle_data::int_type_t::true_visible_1mu2p &&
+                    classification_type(spill, &slice) != particle_data::int_type_t::true_visible_1mu1p            
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu3p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+
+                // /*
+                //  * true_visible_1mu1pi     | BOTH_1mu1pi
+                if (what_to_cut_on == cut_type_t::BOTH_1mu1pi && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1pi
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu1pi but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_1mu2pi     | BOTH_1mu2pi
+                if (what_to_cut_on == cut_type_t::BOTH_1mu2pi && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2pi
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu2pi but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_1mu3pi     | BOTH_1mu3pi
+                if (what_to_cut_on == cut_type_t::BOTH_1mu3pi && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3pi
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu3pi but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_1muNpi     | BOTH_1muNpi
+                if (what_to_cut_on == cut_type_t::BOTH_1muNpi && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNpi
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1muNpi but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_2mu        | BOTH_2mu
+                if (what_to_cut_on == cut_type_t::BOTH_2mu && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_2mu
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_2mu but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_2p         | BOTH_2p
+                if (what_to_cut_on == cut_type_t::BOTH_2p && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_2p
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_2p but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_1muShortNp | BOTH_1muShortNp
+                if (what_to_cut_on == cut_type_t::BOTH_1muShortNp && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muShortNp
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1muShortNp but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_1pi1p      | BOTH_1pi1p
+                if (what_to_cut_on == cut_type_t::BOTH_1pi1p && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1pi1p
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1pi1p but the cuts rejected this event" << std::endl;
+                    continue;
+                }                
+                //  * true_visible_1mu1p1pi0  | BOTH_1mu1p1pi0
+                if (what_to_cut_on == cut_type_t::BOTH_1mu1p1pi0 && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p1pi0
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu1p1pi0 but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                //  * true_visible_1mu1pNpi0  | BOTH_1mu1pNpi0
+                if (what_to_cut_on == cut_type_t::BOTH_1mu1pNpi0 && !(
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1pNpi0
+                )) {
+                    if (debug) std::cout << "The mode was BOTH_1mu1pNpi0 but the cuts rejected this event" << std::endl;
+                    continue;
+                }
+                // */
                 
                 if (!cuts::reco::slice_at_least_mu(&slice))
                     continue;
@@ -644,7 +790,73 @@ namespace cuts {
     } // bool all_trk_contained_MC
 
     namespace truth {
-        const ana::Cut slice_numuCC(ana::kIsNumuCC);
+        const ana::Cut slice_numuCC (ana::kIsNumuCC);
+
+        const ana::Cut slice_numuNC ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.isnc && slice->truth.pdg == 14;
+        });
+
+        const ana::Cut slice_nueCC ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.iscc && slice->truth.pdg == 12;
+        });
+
+        // Genie_interaction_mode_
+        const ana::Cut slice_QE ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kQE;
+        });
+
+        const ana::Cut slice_Res ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kRes;
+        });
+
+        const ana::Cut slice_DIS ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kDIS;
+        });
+
+        const ana::Cut slice_Coh ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kCoh;
+        });
+
+        const ana::Cut slice_CohElastic ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kCohElastic;
+        });
+
+        const ana::Cut slice_ElectronScattering ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kElectronScattering;
+        });
+
+        const ana::Cut slice_IMDAnnihilation ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kIMDAnnihilation;
+        });
+
+        const ana::Cut slice_InverseBetaDecay ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kInverseBetaDecay;
+        });
+
+        const ana::Cut slice_GlashowResonance ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kGlashowResonance;
+        });
+        
+        const ana::Cut slice_AMNuGamma ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kAMNuGamma;
+        });
+        
+        const ana::Cut slice_MEC ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kMEC;
+        });
+
+        const ana::Cut slice_Diffractive ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kDiffractive;
+        });
+        
+        const ana::Cut slice_EM ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kEM;
+        });
+
+        const ana::Cut slice_WeakMix ([](const caf::SRSliceProxy *slice) -> bool {
+            return slice->truth.genie_mode == caf::genie_interaction_mode_::kWeakMix;
+        });
+        // --------------------------
 
         const ana::Cut slice_vtx_in_FV ([](const caf::SRSliceProxy *slice) -> bool {
             return in_FV (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z);
@@ -784,6 +996,46 @@ namespace cuts {
             } // loop pfp
 
             return num_protons == 1 && num_pions == 0 && num_showers == 0;
+        });
+
+        const ana::Cut slice_1mu2p ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
+            } // loop pfp
+
+            return num_protons == 2 && num_pions == 0 && num_showers == 0;
+        });
+
+        const ana::Cut slice_1mu3p ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                    if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
+            } // loop pfp
+
+            return num_protons == 3 && num_pions == 0 && num_showers == 0;
         });
 
         double flashtime = 0;
@@ -1259,6 +1511,59 @@ namespace vars {
             );
             return TMath::Cos(muon_p.Angle(proton_p));
         }); // const ana::Var slice_CT3D_trueP_muon_leading_proton
+
+        std::vector<int> ordered_protons_by_length (const caf::SRSliceProxy *slice) {
+            std::vector<std::pair<int, double>> ipfp_length_pairs_all;
+            std::vector<int> ordered_ipfp;
+
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp)
+            {
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) != particle_data::particle_t::proton)
+                    continue;
+                if (ipfp == ipfp_muon)
+                    continue;
+            
+                // Add all the pairs (ipfp, lenght)
+                ipfp_length_pairs_all.emplace_back(ipfp, slice->reco.pfp[ipfp].trk.len);
+    
+            } // loop ipfp<slice->npfp
+    
+            std::sort(ipfp_length_pairs_all.begin(), ipfp_length_pairs_all.end(), 
+                [](const std::pair<int, double> &a, const std::pair<int, double> &b) { return a.second > b.second; }
+            );
+    
+            for (auto const& ipfp_length: ipfp_length_pairs_all) 
+                ordered_ipfp.push_back(ipfp_length.first);
+    
+            return ordered_ipfp;
+        } // std::vector<int> ordered_pfps_by_length
+
+        const ana::Var slice_muon_track_score ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1;
+
+            return slice->reco.pfp[ipfp_muon].trackScore;
+        });
+
+        const ana::Var slice_proton_track_score ([](const caf::SRSliceProxy *slice) -> double {
+            std::vector<int> ipfps = ordered_protons_by_length(slice);
+            if (ipfps.size() == 0) return -1;
+            int ipfp_proton = ipfps.at(0);
+            if (ipfp_proton == -1) return -1;
+
+            return slice->reco.pfp[ipfp_proton].trackScore;
+        });
+
+        const ana::Var slice_second_proton_track_score ([](const caf::SRSliceProxy *slice) -> double {
+            std::vector<int> ipfps = ordered_protons_by_length(slice);
+            if (ipfps.size() < 2) return -1;
+            int ipfp_proton = ipfps.at(1);
+            if (ipfp_proton == -1) return -1;
+
+            return slice->reco.pfp[ipfp_proton].trackScore;
+        });
     } // namespace reco
 
     namespace truth {
@@ -1316,13 +1621,16 @@ namespace var_utils {
            slice->truth.iscc                           && 
            !std::isnan(slice->truth.position.x)        && 
            !std::isnan(slice->truth.position.y)        && 
-           !std::isnan(slice->truth.position.z)        &&
-           cuts::in_FV (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z) &&
-           cuts::in_active (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z)
+           !std::isnan(slice->truth.position.z)        // &&
+        //    cuts::in_FV (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z) &&
+        //    cuts::in_active (slice->truth.position.x, slice->truth.position.y, slice->truth.position.z)
         )) return particle_data::int_type_t::unclassified;
         
         int num_protons_above50 = 0;
         int num_muons = 0;
+        int num_pions = 0;
+        int num_neutral_pions = 0;
+        int num_gamma = 0;
         double length_muon = 0;
         double dep_E = 0;
  
@@ -1335,11 +1643,11 @@ namespace var_utils {
             if (prim.G4ID < 0)
                 continue;
             
-            // if (prim.cryostat < 0)
-            //     continue;
+            if (prim.cryostat < 0)
+                continue;
 
             if (std::abs(prim.pdg) == 211) {
-                return particle_data::int_type_t::unclassified;
+                num_pions += 1;
             } // found charged pion, returning
 
             /* Looking at neutral pions: trickier
@@ -1351,7 +1659,7 @@ namespace var_utils {
                         true_particle.parent == prim.G4ID && std::abs(true_particle.pdg) == 22 &&
                         true_particle.plane[prim.cryostat][use_plane].visE * particle_data::GeV > particle_data::minimum_gamma_MeV
                     ){
-                        return particle_data::int_type_t::unclassified;
+                        num_neutral_pions += 1;
                     }
                 } // loop spill->true_particles
             } // neutral pion found
@@ -1373,7 +1681,7 @@ namespace var_utils {
 
             // if primary is photon with dep energy > 25 MeV skip...
             if (std::abs(prim.pdg) == 22 && dep_E > particle_data::minimum_gamma_MeV)
-                return particle_data::int_type_t::unclassified;
+                num_gamma += 1;
 
             if (std::abs(prim.pdg) == 2212) {
                 if (prim.daughters.size() > 0) {
@@ -1392,15 +1700,81 @@ namespace var_utils {
             dep_E = 0;
         } // loop slice->truth.prim
 
-        if (
-            num_muons == 1 && num_protons_above50 == 1 && 
-            length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
-        ) return particle_data::int_type_t::true_visible_1mu1p;
+        if (num_gamma == 0 && num_pions == 0 && num_neutral_pions == 0) {
+            if (
+                num_muons == 1 && num_protons_above50 == 1 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu1p;
+    
+            if (
+                num_muons == 1 && num_protons_above50 == 2 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu2p;
+    
+            if (
+                num_muons == 1 && num_protons_above50 == 3 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu3p;
+    
+            if (
+                num_muons == 1 && num_protons_above50 > 1 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1muNp;
+        } else {
+            // here fallback for additional tests
+            // interesting topologies to search:
+            //  - 1mu1pi
+            if (
+                num_muons == 1 && num_pions == 1 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu1pi;
+            //  - 1mu2pi
+            if (
+                num_muons == 1 && num_pions == 2 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu2pi;
+            //  - 1mu3pi
+            if (
+                num_muons == 1 && num_pions == 3 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu3pi;
+            //  - 1muNpi
+            if (
+                num_muons == 1 && num_pions > 0 && 
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1muNpi;
+            //  - 2mu
+            if (
+                num_muons == 2 &&  
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_2mu;
+            //  - 2p
+            if (
+                num_protons_above50 == 2 &&
+                cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_2p;
+            //  - 1muShortNp (no muon 50cm lenght)
+            if (
+                num_muons == 1 &&
+                cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1muShortNp;
+            //  - 1pi1p
+            if (
+                num_protons_above50 == 1 && num_pions == 1 &&
+                cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1pi1p;
+            //  - 1mu1p1pi0
+            if (
+                num_muons == 1 && num_pions == 1 && num_neutral_pions == 1 &&
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu1p1pi0;
+            //  - 1mu1pNpi0
+            if (
+                num_muons == 1 && num_pions == 1 && num_neutral_pions > 1 &&
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1mu1pNpi0;
 
-        if (
-            num_muons == 1 && num_protons_above50 > 1 && 
-            length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
-        ) return particle_data::int_type_t::true_visible_1muNp;
+        }
 
         return particle_data::int_type_t::unclassified;
     } // int classification_type
