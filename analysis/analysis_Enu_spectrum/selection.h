@@ -316,8 +316,8 @@ namespace var_utils {
                 }
                 // */
                 
-                if (!cuts::reco::slice_at_least_mu(&slice))
-                    continue;
+                // if (!cuts::reco::slice_at_least_mu(&slice))
+                //     continue;
 
                 slice_value = slice_var(&slice);
 
@@ -1564,6 +1564,12 @@ namespace vars {
 
             return slice->reco.pfp[ipfp_proton].trackScore;
         });
+
+        const ana::Var slice_Np ([](const caf::SRSliceProxy *slice) -> double {
+            std::vector<int> ipfps = ordered_protons_by_length(slice);
+            // if (ipfps.size() == 0) return -1;
+            return ipfps.size();
+        }); // const ana::Var slice_Np
     } // namespace reco
 
     namespace truth {
@@ -1638,7 +1644,7 @@ namespace var_utils {
 
         for (auto const& prim: slice->truth.prim) {
 
-            dep_E = 0;
+            dep_E = 0; 
             
             if (prim.G4ID < 0)
                 continue;

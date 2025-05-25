@@ -16,6 +16,7 @@ const ana::Cut def_cut = (
     // ana::kNoCut
     // (cuts::reco::slice_1mu1p || cuts::reco::slice_1muNp) &&
     cuts::reco::slice_1mu1p             &&
+    cuts::reco::slice_at_least_mu       &&
     cuts::reco::slice_vtx_in_FV         &&
     cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
@@ -64,6 +65,14 @@ const ana::SpillVar spill_L_reco_true_ratio_nueCC           = SPILLVAR(-9999, va
 const ana::SpillVar spill_L_reco_true_ratio_dirt_2mu        = SPILLVAR(-9999, vars::reco::slice_pid_muon_L_reco_true_ratio, def_cut, cut_type_t::BOTH_2mu,        def_cut_truth);
 const ana::SpillVar spill_L_reco_true_ratio_dirt_2p         = SPILLVAR(-9999, vars::reco::slice_pid_muon_L_reco_true_ratio, def_cut, cut_type_t::BOTH_2p,         def_cut_truth);
 const ana::SpillVar spill_L_reco_true_ratio_dirt_1muShortNp = SPILLVAR(-9999, vars::reco::slice_pid_muon_L_reco_true_ratio, def_cut, cut_type_t::BOTH_1muShortNp, def_cut_truth);
+
+const ana::SpillVar spill_muon_track_score_reco_1u1p        = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::RECO,            def_cut_truth);
+const ana::SpillVar spill_muon_track_score_numuCC           = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::BOTH_1mu1p,      def_cut_truth);
+const ana::SpillVar spill_muon_track_score_numuNC           = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::RECO,            def_cut_truth && cuts::truth::slice_numuNC);
+const ana::SpillVar spill_muon_track_score_nueCC            = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::RECO,            def_cut_truth && cuts::truth::slice_nueCC);
+const ana::SpillVar spill_muon_track_score_dirt_2mu         = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::BOTH_2mu,        def_cut_truth);
+const ana::SpillVar spill_muon_track_score_dirt_2p          = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::BOTH_2p,         def_cut_truth);
+const ana::SpillVar spill_muon_track_score_dirt_1muShortNp  = SPILLVAR(-9999, vars::reco::slice_muon_track_score, def_cut, cut_type_t::BOTH_1muShortNp, def_cut_truth);
 
 void reco_1mu1p_muons() {
 
@@ -139,7 +148,14 @@ void reco_1mu1p_muons() {
                 "L_reco_true_ratio_nueCC",
                 "L_reco_true_ratio_dirt_2mu",
                 "L_reco_true_ratio_dirt_2p",
-                "L_reco_true_ratio_dirt_1muShortNp"
+                "L_reco_true_ratio_dirt_1muShortNp",
+                "spill_muon_track_score_reco_1u1p",
+                "spill_muon_track_score_numuCC",
+                "spill_muon_track_score_numuNC",
+                "spill_muon_track_score_nueCC",
+                "spill_muon_track_score_dirt_2mu",
+                "spill_muon_track_score_dirt_2p",
+                "spill_muon_track_score_dirt_1muShortNp"
             }, 
             loader,
             std::vector<ana::SpillVar>{
@@ -178,7 +194,14 @@ void reco_1mu1p_muons() {
                 spill_L_reco_true_ratio_nueCC,
                 spill_L_reco_true_ratio_dirt_2mu,
                 spill_L_reco_true_ratio_dirt_2p,
-                spill_L_reco_true_ratio_dirt_1muShortNp
+                spill_L_reco_true_ratio_dirt_1muShortNp,
+                spill_muon_track_score_reco_1u1p,
+                spill_muon_track_score_numuCC,
+                spill_muon_track_score_numuNC,
+                spill_muon_track_score_nueCC,
+                spill_muon_track_score_dirt_2mu,
+                spill_muon_track_score_dirt_2p,
+                spill_muon_track_score_dirt_1muShortNp
             },
             cuts::reco::spill_CRTPMTNeutrino
         ));

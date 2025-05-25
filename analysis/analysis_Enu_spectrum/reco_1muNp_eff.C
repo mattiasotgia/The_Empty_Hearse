@@ -20,6 +20,7 @@ const ana::Cut def_cut = (
     // ana::kNoCut
     (cuts::reco::slice_1mu1p || cuts::reco::slice_1muNp) &&
     // cuts::reco::slice_1mu1p             &&
+    cuts::reco::slice_at_least_mu       &&
     cuts::reco::slice_vtx_in_FV         &&
     cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
@@ -114,10 +115,65 @@ void reco_1muNp_eff() {
         loader.Go();
     }
 
+    // Vertex/Mva cheating only run
+    ana::SpectrumLoader cheated("msotgia_v09_89_01_01p03_stage1_to_caf_vtx_mva_only_cp_cheated_flat");
+    ana::SpectrumLoader cheated_vtx("msotgia_v09_89_01_01p03_stage1_to_caf_vtx_mva_only_cp_vtx_flat");
+    ana::SpectrumLoader cheated_mva("msotgia_v09_89_01_01p03_stage1_to_caf_vtx_mva_only_cp_mva_flat");
+    ana::SpectrumLoader nominal("msotgia_v09_89_01_01p03_stage1_to_caf_vtx_mva_only_cp_nominal_flat");
+
+    std::map<std::string, ana::SpectrumLoader*> loaders_vtx_mva = {
+        {"cheated", &cheated},
+        {"cheated_vtx", &cheated_vtx},
+        {"cheated_mva", &cheated_mva},
+        {"nominal", &nominal}
+    };
+
+    std::vector<std::string> running_loaders_vtx_mva = {
+        "cheated",
+        "cheated_vtx",
+        "cheated_mva",
+        "nominal"
+    };
+
+    std::vector<std::unique_ptr<ana::Tree>> trees_vtx_mva;
+
+    for (auto const& running_loader: running_loaders_vtx_mva) {
+        
+        ana::SpectrumLoader& loader = *loaders_vtx_mva.at(running_loader);
+
+        trees_vtx_mva.emplace_back(std::make_unique<ana::Tree>(
+            ("reco_true_" + running_loader).c_str(), 
+            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            loader,
+            std::vector<ana::SpillVar>{event, spill_reco_E_reco_true_cut, spill_true_E_reco_true_cut, spill_reco_pT_reco_true_cut},
+            cuts::reco::spill_CRTPMTNeutrino
+        ));
+        trees_vtx_mva.emplace_back(std::make_unique<ana::Tree>(
+            ("reco_" + running_loader).c_str(), 
+            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            loader,
+            std::vector<ana::SpillVar>{event, spill_reco_E_reco_cut, spill_true_E_reco_cut, spill_reco_pT_reco_cut},
+            cuts::reco::spill_CRTPMTNeutrino
+        ));
+        trees_vtx_mva.emplace_back(std::make_unique<ana::Tree>(
+            ("true_" + running_loader).c_str(), 
+            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            loader,
+            std::vector<ana::SpillVar>{event, spill_reco_E_true_cut, spill_true_E_true_cut, spill_reco_pT_true_cut},
+            cuts::reco::spill_CRTPMTNeutrino
+        ));
+
+        loader.Go();
+    }
+
     std::unique_ptr<TFile> file_1muNp(new TFile("efficiency_plot_1uNp.root", "RECREATE"));
-    file_1muNp->mkdir("efficiency_studies");
+    file_1mu1p->mkdir("efficiency_studies");
+    file_1mu1p->mkdir("vtx_mva_only_cheating");
     for (auto const& tree: trees) 
-        tree->SaveTo(file_1muNp->GetDirectory("efficiency_studies"));
+        tree->SaveTo(file_1mu1p->GetDirectory("efficiency_studies"));
+
+    for (auto const& tree: trees_vtx_mva) 
+        tree->SaveTo(file_1mu1p->GetDirectory("vtx_mva_only_cheating"));
 };
 
 #endif 
