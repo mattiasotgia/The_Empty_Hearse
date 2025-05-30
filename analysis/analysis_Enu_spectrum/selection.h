@@ -154,8 +154,11 @@ namespace var_utils {
                     if (debug) std::cout << "The mode was RECO but the cuts rejected this event" << std::endl;
                     continue;
                 } 
-                if (what_to_cut_on == cut_type_t::TRUE_1muN1p && !(
-                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp && truth_cut(&slice)
+                if (what_to_cut_on == cut_type_t::TRUE_1muN1p && !((
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p ||
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p ||
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp) &&
+                    truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
                     continue;
@@ -180,6 +183,8 @@ namespace var_utils {
                 }
                 if (what_to_cut_on == cut_type_t::TRUE_1muNp && !((
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p || 
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p ||
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p ||
                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp) && 
                     truth_cut(&slice)
                 )) {
@@ -189,14 +194,18 @@ namespace var_utils {
                 if (what_to_cut_on == cut_type_t::BOTH_1muNp && !(
                     reco_cut(&slice) && truth_cut(&slice) && 
                     (classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp || 
-                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p)
+                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p ||
+                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p ||
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1µNp (N>=1) but the cuts rejected this event" << std::endl;
                     continue;
                 }
                 if (what_to_cut_on == cut_type_t::BOTH_1muN1p && !(
-                    reco_cut(&slice) && truth_cut(&slice) || 
-                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp
+                    reco_cut(&slice) && truth_cut(&slice) && 
+                    (classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp ||
+                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p ||
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1µN1p (N>1) but the cuts rejected this event" << std::endl;
                     continue;
@@ -224,10 +233,7 @@ namespace var_utils {
                 }
                 if (what_to_cut_on == cut_type_t::BOTH_1muN3p && !(
                     reco_cut(&slice) && truth_cut(&slice) && 
-                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp &&
-                    classification_type(spill, &slice) != particle_data::int_type_t::true_visible_1mu3p &&
-                    classification_type(spill, &slice) != particle_data::int_type_t::true_visible_1mu2p &&
-                    classification_type(spill, &slice) != particle_data::int_type_t::true_visible_1mu1p            
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp         
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1mu3p but the cuts rejected this event" << std::endl;
                     continue;
@@ -661,6 +667,11 @@ namespace cuts {
     bool in_contained (double x, double y, double z, double dist = 5.) {
         if (std::isnan(x) || std::isnan(y) || std::isnan(z))
             return false;
+
+        if(y < ( 1.732007 * z - 1687.5114)) return false;
+        if(y > (-1.732007 * z + 1640.6114)) return false;
+        if(y > ( 1.732007 * z + 1640.6114)) return false;
+        if(y < (-1.732007 * z - 1687.5114)) return false;
 
         // 5 cm containment for Y in both cryo
         return (((x < -61.94 - dist && x > -358.49 + dist) || // cheack on x direction cryo E/0
@@ -1723,7 +1734,7 @@ namespace var_utils {
             ) return particle_data::int_type_t::true_visible_1mu3p;
     
             if (
-                num_muons == 1 && num_protons_above50 > 1 && 
+                num_muons == 1 && num_protons_above50 > 3 && 
                 length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
             ) return particle_data::int_type_t::true_visible_1muNp;
         } else {

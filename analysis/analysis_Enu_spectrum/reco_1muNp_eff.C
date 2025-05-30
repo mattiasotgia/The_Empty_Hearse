@@ -41,9 +41,9 @@ const ana::SpillVar spill_true_E_reco_true_cut  = SPILLVAR(-9999, vars::truth::s
 const ana::SpillVar spill_reco_pT_reco_true_cut = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, reco_true_1uNp, def_cut_truth);
 
 // true only
-const ana::SpillVar spill_reco_E_true_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, true_1uNp, def_cut_truth);
-const ana::SpillVar spill_true_E_true_cut       = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, true_1uNp, def_cut_truth);
-const ana::SpillVar spill_reco_pT_true_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, true_1uNp, def_cut_truth);
+const ana::SpillVar spill_reco_E_true_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, true_1uNp, def_cut_truth); /// [resolved] WARNING: I had to add the slice_at_leat_mu reco cut, otherwise the efficiency would have dropped below 50%
+const ana::SpillVar spill_true_E_true_cut       = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, true_1uNp, def_cut_truth); /// [resolved] WARNING: I had to add the slice_at_leat_mu reco cut, otherwise the efficiency would have dropped below 50%
+const ana::SpillVar spill_reco_pT_true_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, true_1uNp, def_cut_truth); /// [resolved] WARNING: I had to add the slice_at_leat_mu reco cut, otherwise the efficiency would have dropped below 50%
 
 // reco only
 const ana::SpillVar spill_reco_E_reco_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, reco_1uNp, def_cut_truth);
@@ -167,13 +167,13 @@ void reco_1muNp_eff() {
     }
 
     std::unique_ptr<TFile> file_1muNp(new TFile("efficiency_plot_1uNp.root", "RECREATE"));
-    file_1mu1p->mkdir("efficiency_studies");
-    file_1mu1p->mkdir("vtx_mva_only_cheating");
+    file_1muNp->mkdir("efficiency_studies");
+    file_1muNp->mkdir("vtx_mva_only_cheating");
     for (auto const& tree: trees) 
-        tree->SaveTo(file_1mu1p->GetDirectory("efficiency_studies"));
+        tree->SaveTo(file_1muNp->GetDirectory("efficiency_studies"));
 
     for (auto const& tree: trees_vtx_mva) 
-        tree->SaveTo(file_1mu1p->GetDirectory("vtx_mva_only_cheating"));
+        tree->SaveTo(file_1muNp->GetDirectory("vtx_mva_only_cheating"));
 };
 
 #endif 
