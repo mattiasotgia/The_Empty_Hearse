@@ -17,38 +17,52 @@ using level_t = logger::level;
 using cut_type_t = var_utils::cut_type_t;
 
 const ana::Cut def_cut = (
-    (cuts::reco::slice_1mu1p || cuts::reco::slice_1muNp) &&
+    cuts::reco::slice_1mu1p             &&
     cuts::reco::slice_at_least_mu       &&
     cuts::reco::slice_vtx_in_FV         &&
     cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
 );
 
+const ana::Cut s8 = (
+    cuts::reco::slice_1mu1p             &&
+    cuts::reco::slice_at_least_mu       &&
+    cuts::reco::slice_vtx_in_FV         &&
+    cuts::reco::slice_barycenter        &&
+    cuts::reco::slice_all_trk_contained
+);
+
+const ana::Cut s1 = (ana::kNoCut);
+const ana::Cut s2 = (cuts::reco::slice_barycenter);
+const ana::Cut s3 = (cuts::reco::slice_barycenter && cuts::reco::slice_vtx_in_FV);
+const ana::Cut s4 = (cuts::reco::slice_barycenter && cuts::reco::slice_vtx_in_FV && cuts::reco::slice_all_trk_contained);
+const ana::Cut s5 = (cuts::reco::slice_barycenter && cuts::reco::slice_vtx_in_FV && cuts::reco::slice_all_trk_contained && cuts::reco::slice_at_least_mu);
+const ana::Cut s6 = (cuts::reco::slice_barycenter && cuts::reco::slice_vtx_in_FV && cuts::reco::slice_all_trk_contained && cuts::reco::slice_at_least_mu && cuts::reco::slice_1p_only);
+const ana::Cut s7 = (cuts::reco::slice_barycenter && cuts::reco::slice_vtx_in_FV && cuts::reco::slice_all_trk_contained && cuts::reco::slice_at_least_mu && cuts::reco::slice_1p_only && cuts::reco::slice_0pi_only && cuts::reco::slice_0showers_only);
+
+
 const ana::Cut def_cut_truth = (
     cuts::truth::slice_vtx_in_FV
 );
 
-const cut_type_t reco_true_1uNp = cut_type_t::BOTH_1muNp;
-const cut_type_t true_1uNp = cut_type_t::TRUE_1muNp;
-const cut_type_t reco_1uNp = cut_type_t::RECO;
-const particle_data::int_type_t type = particle_data::int_type_t::true_visible_1muNp;
+const cut_type_t reco_true_1u1p = cut_type_t::BOTH_1mu1p;
+const cut_type_t true_1u1p = cut_type_t::TRUE_1mu1p;
+const cut_type_t reco_1u1p = cut_type_t::RECO;
+const particle_data::int_type_t type = particle_data::int_type_t::true_visible_1mu1p;
 
 // true + reco
-const ana::SpillVar spill_reco_E_reco_true_cut  = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, reco_true_1uNp, def_cut_truth);
-const ana::SpillVar spill_true_E_reco_true_cut  = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, reco_true_1uNp, def_cut_truth);
-const ana::SpillVar spill_reco_pT_reco_true_cut = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar spill_true_E_reco_true_cut_s7 = SPILLVAR(-9999, vars::truth::slice_neutrino_energy, s7, reco_true_1u1p, def_cut_truth);
+const ana::SpillVar spill_true_E_reco_true_cut_s8 = SPILLVAR(-9999, vars::truth::slice_neutrino_energy, s8, reco_true_1u1p, def_cut_truth);
 
 // true only
-const ana::SpillVar spill_reco_E_true_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, true_1uNp, def_cut_truth); /// [resolved] WARNING: I had to add the slice_at_leat_mu reco cut, otherwise the efficiency would have dropped below 50%
-const ana::SpillVar spill_true_E_true_cut       = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, true_1uNp, def_cut_truth); /// [resolved] WARNING: I had to add the slice_at_leat_mu reco cut, otherwise the efficiency would have dropped below 50%
-const ana::SpillVar spill_reco_pT_true_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, true_1uNp, def_cut_truth); /// [resolved] WARNING: I had to add the slice_at_leat_mu reco cut, otherwise the efficiency would have dropped below 50%
+const ana::SpillVar spill_true_E_true_cut_s7      = SPILLVAR(-9999, vars::truth::slice_neutrino_energy, s7, true_1u1p, def_cut_truth);
+const ana::SpillVar spill_true_E_true_cut_s8      = SPILLVAR(-9999, vars::truth::slice_neutrino_energy, s8, true_1u1p, def_cut_truth);
 
 // reco only
-const ana::SpillVar spill_reco_E_reco_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, reco_1uNp, def_cut_truth);
-const ana::SpillVar spill_true_E_reco_cut       = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, reco_1uNp, def_cut_truth);
-const ana::SpillVar spill_reco_pT_reco_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, reco_1uNp, def_cut_truth);
+const ana::SpillVar spill_true_E_reco_cut_s7      = SPILLVAR(-9999, vars::truth::slice_neutrino_energy, s7, reco_1u1p, def_cut_truth);
+const ana::SpillVar spill_true_E_reco_cut_s8      = SPILLVAR(-9999, vars::truth::slice_neutrino_energy, s8, reco_1u1p, def_cut_truth);
 
-void reco_1muNp_eff() {
+void reco_1mu1p_eff_cuts_test() {
 
     ana::SpectrumLoader nominal_loader                  ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_nominal");
     ana::SpectrumLoader cheated_Mva_loader              ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_mva");
@@ -75,13 +89,7 @@ void reco_1muNp_eff() {
     // Running all :)
     std::vector<std::string> running_loaders = {
         "nominal_loader",
-        "cheated_Mva_loader",
-        "cheated_Vtx_loader",
-        "cheated_VtxSelection_loader",
         "cheated_2D_loader",
-        "cheated_2D_Vtx_loader",
-        "cheated_2D_Vtx_3D_loader",
-        "cheated_2D_Vtx_3D_Nu_loader",
         "cheated_2D_Vtx_3D_Nu_Mva_loader"
     };
 
@@ -91,35 +99,60 @@ void reco_1muNp_eff() {
         
         ana::SpectrumLoader& loader = *loaders_available.at(running_loader);
 
+
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("reco_true_" + running_loader).c_str(), 
-            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            std::vector<std::string>{
+                "event",
+                "s7",
+                "s8"
+            }, 
             loader,
-            std::vector<ana::SpillVar>{event, spill_reco_E_reco_true_cut, spill_true_E_reco_true_cut, spill_reco_pT_reco_true_cut},
+            std::vector<ana::SpillVar>{
+                event,
+                spill_true_E_reco_true_cut_s7,
+                spill_true_E_reco_true_cut_s8
+            },
             cuts::reco::spill_CRTPMTNeutrino
         ));
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("reco_" + running_loader).c_str(), 
-            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            std::vector<std::string>{
+                "event",
+                "s7",
+                "s8"
+            }, 
             loader,
-            std::vector<ana::SpillVar>{event, spill_reco_E_reco_cut, spill_true_E_reco_cut, spill_reco_pT_reco_cut},
+            std::vector<ana::SpillVar>{
+                event,
+                spill_true_E_reco_cut_s7,
+                spill_true_E_reco_cut_s8
+            },
             cuts::reco::spill_CRTPMTNeutrino
         ));
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("true_" + running_loader).c_str(), 
-            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            std::vector<std::string>{
+                "event",
+                "s7",
+                "s8"
+            }, 
             loader,
-            std::vector<ana::SpillVar>{event, spill_reco_E_true_cut, spill_true_E_true_cut, spill_reco_pT_true_cut},
+            std::vector<ana::SpillVar>{
+                event,
+                spill_true_E_true_cut_s7,
+                spill_true_E_true_cut_s8
+            },
             cuts::reco::spill_CRTPMTNeutrino
         ));
 
         loader.Go();
     }
 
-    std::unique_ptr<TFile> file_1muNp(new TFile("2k_efficiency_plot_1uNp.root", "RECREATE"));
-    file_1muNp->mkdir("efficiency_studies");
+    std::unique_ptr<TFile> file_1mu1p(new TFile("2k_efficiency_plot_1u1p_cuts_test.root", "RECREATE"));
+    file_1mu1p->mkdir("efficiency_studies");
     for (auto const& tree: trees) 
-        tree->SaveTo(file_1muNp->GetDirectory("efficiency_studies"));
+        tree->SaveTo(file_1mu1p->GetDirectory("efficiency_studies"));
 };
 
 #endif 

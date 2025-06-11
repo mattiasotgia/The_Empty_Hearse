@@ -8,3 +8,7 @@ refresh_token () {
 }
 
 refresh_token
+
+cleanup_caafe () {
+    rm -I *.d *.so *.pcm
+}

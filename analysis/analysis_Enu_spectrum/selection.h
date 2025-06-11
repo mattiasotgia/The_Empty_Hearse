@@ -148,6 +148,9 @@ namespace var_utils {
             A slice_value = __def_ret;
             bool debug = false;
     
+            std::vector<double> efficiency;
+            std::vector<double> purity;
+
             for (auto const& slice: spill->slc) {
     
                 if (what_to_cut_on == cut_type_t::RECO && !(reco_cut(&slice) && truth_cut(&slice))) {
@@ -193,10 +196,10 @@ namespace var_utils {
                 }
                 if (what_to_cut_on == cut_type_t::BOTH_1muNp && !(
                     reco_cut(&slice) && truth_cut(&slice) && 
-                    (classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp || 
-                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p ||
+                    (classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu1p || 
                      classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu2p ||
-                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p)
+                     classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1mu3p ||
+                    classification_type(spill, &slice) == particle_data::int_type_t::true_visible_1muNp)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1µNp (N>=1) but the cuts rejected this event" << std::endl;
                     continue;
@@ -327,15 +330,26 @@ namespace var_utils {
 
                 slice_value = slice_var(&slice);
 
+                efficiency.push_back(slice.tmatch.eff);
+                purity.push_back(slice.tmatch.pur);
+
                 selected_slices ++ ;
             } // loop spill->slc
         
-            if (selected_slices > 1) 
+            if (selected_slices > 1) {
                 logger::log(level_t::error) << "Something wrong with run:event = " 
                                             << run(spill) << ":" << event(spill) 
                                             << " => found " << selected_slices
                                             << " slice(s) 1µNp"
                                             << std::endl;
+                std::cout << "eff : {";
+                for (auto const& eff: efficiency) std::cout << eff << ", ";
+                std::cout << "}" << std::endl;
+
+                std::cout << "pur : {";
+                for (auto const& pur: purity) std::cout << pur << ", ";
+                std::cout << "}" << std::endl;
+            }
             return slice_value;
         });
     }
@@ -989,6 +1003,66 @@ namespace cuts {
             return num_protons > 1 && num_pions == 0 && num_showers == 0;
         });
 
+        const ana::Cut slice_1p_only ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
+            } // loop pfp
+
+            return num_protons == 1;
+        });
+
+        const ana::Cut slice_0pi_only ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
+            } // loop pfp
+
+            return num_pions == 0;
+        });
+
+        const ana::Cut slice_0showers_only ([](const caf::SRSliceProxy *slice) -> bool {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
+
+            int num_protons = 0;
+            int num_pions = 0;
+            int num_showers = 0;
+
+            for (std::size_t ipfp = 0; ipfp < slice->reco.npfp; ++ipfp) {
+                if (int(ipfp) == ipfp_muon)
+                    continue;
+
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::proton)  num_protons++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::pion)    num_pions++;
+                if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
+            } // loop pfp
+
+            return num_showers == 0;
+        });
+
         const ana::Cut slice_1mu1p ([](const caf::SRSliceProxy *slice) -> bool {
             int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
             if (ipfp_muon == -1) return false; // redundant, btw, but who cares...
@@ -1204,6 +1278,19 @@ namespace vars {
             if (ipfp_muon == -1) return -1; // negative energy backed up by cut
 
             return slice->reco.pfp[ipfp_muon].trk.len;
+        }); // const ana::Var slice_pid_muon_reco_length
+
+        const ana::Var slice_pid_muon_L_ratio_proxy ([](const caf::SRSliceProxy *slice) -> double {
+            int ipfp_muon = var_utils::find_muon(*slice, var_utils::dist_cut);
+            if (ipfp_muon == -1) return -1; // negative energy backed up by cut
+
+            double length = std::sqrt(
+                std::pow( slice->reco.pfp[ipfp_muon].trk.start.x - slice->reco.pfp[ipfp_muon].trk.end.x , 2) + 
+                std::pow( slice->reco.pfp[ipfp_muon].trk.start.y - slice->reco.pfp[ipfp_muon].trk.end.y , 2) + 
+                std::pow( slice->reco.pfp[ipfp_muon].trk.start.z - slice->reco.pfp[ipfp_muon].trk.end.z , 2) 
+            );
+
+            return length / slice->reco.pfp[ipfp_muon].trk.truth.p.length;
         }); // const ana::Var slice_pid_muon_reco_length
 
         const ana::Var slice_pid_muon_true_length ([](const caf::SRSliceProxy *slice) -> double {
@@ -1737,6 +1824,21 @@ namespace var_utils {
                 num_muons == 1 && num_protons_above50 > 3 && 
                 length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
             ) return particle_data::int_type_t::true_visible_1muNp;
+            //  - 1muShortNp (no muon 50cm lenght)
+            if (
+                num_muons == 1 &&
+                cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_1muShortNp;
+            //  - 2mu
+            if (
+                num_muons == 2 &&  
+                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_2mu;
+            //  - 2p
+            if (
+                num_protons_above50 == 2 &&
+                cuts::all_trk_contained_truth(spill, slice)
+            ) return particle_data::int_type_t::true_visible_2p;
         } else {
             // here fallback for additional tests
             // interesting topologies to search:
@@ -1760,21 +1862,6 @@ namespace var_utils {
                 num_muons == 1 && num_pions > 0 && 
                 length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
             ) return particle_data::int_type_t::true_visible_1muNpi;
-            //  - 2mu
-            if (
-                num_muons == 2 &&  
-                length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
-            ) return particle_data::int_type_t::true_visible_2mu;
-            //  - 2p
-            if (
-                num_protons_above50 == 2 &&
-                cuts::all_trk_contained_truth(spill, slice)
-            ) return particle_data::int_type_t::true_visible_2p;
-            //  - 1muShortNp (no muon 50cm lenght)
-            if (
-                num_muons == 1 &&
-                cuts::all_trk_contained_truth(spill, slice)
-            ) return particle_data::int_type_t::true_visible_1muShortNp;
             //  - 1pi1p
             if (
                 num_protons_above50 == 1 && num_pions == 1 &&
