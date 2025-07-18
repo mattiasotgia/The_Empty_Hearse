@@ -1,3 +1,4 @@
+
 #include "helper.h"
 #include "selection.h"
 
@@ -64,33 +65,56 @@ const ana::SpillVar spill_true_E_dirt_1mu1pNpi0     = SPILLVAR(-9999, vars::trut
 
 
 void reco_1mu1p_component_analysis() {
+    
+    ana::SpectrumLoader nominal_loader                     ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_nominal");
+    ana::SpectrumLoader cheated_2d_loader                  ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d");
+    ana::SpectrumLoader cheated_vtx_loader                 ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_vtx");
+    ana::SpectrumLoader cheated_vtxSelection_loader        ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_vtxSelection");
+    ana::SpectrumLoader cheated_3d_loader                  ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_3d");
+    ana::SpectrumLoader cheated_nuH_loader                 ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_nuH");
+    ana::SpectrumLoader cheated_mva_loader                 ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_mva");
+    ana::SpectrumLoader cheated_2d_vtx_loader              ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx");
+    ana::SpectrumLoader cheated_2d_vtx_3d_loader           ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d");
+    ana::SpectrumLoader cheated_2d_vtx_3d_nu_loader        ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu");
+    ana::SpectrumLoader cheated_2d_vtx_3d_nu_mva_loader    ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu_mva");
 
-    // Newer sample run...
-    ana::SpectrumLoader cheated_2D_Vtx_3D_Nu_Mva_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_down_ladder_cheated_2D_Vtx_3D_Nu_Mva");
-    ana::SpectrumLoader cheated_2D_Vtx_3D_Nu_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_down_ladder_cheated_2D_Vtx_3D_Nu");
-    ana::SpectrumLoader cheated_2D_Vtx_3D_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_down_ladder_cheated_2D_Vtx_3D");
-    ana::SpectrumLoader cheated_2D_Vtx_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_down_ladder_cheated_2D_Vtx");
-    ana::SpectrumLoader cheated_2D_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_down_ladder_cheated_2D");
-    ana::SpectrumLoader nominal_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_down_ladder_nominal");
-
+    // ana::SpectrumLoader nominal_loader                  ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_nominal");
+    // ana::SpectrumLoader cheated_Mva_loader              ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_mva");
+    // ana::SpectrumLoader cheated_Vtx_loader              ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_vtx");
+    // ana::SpectrumLoader cheated_VtxSelection_loader     ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_vtx_selection");    
+    // ana::SpectrumLoader cheated_2D_loader               ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_2D");
+    // ana::SpectrumLoader cheated_2D_Vtx_loader           ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_2D_vtx");
+    // ana::SpectrumLoader cheated_2D_Vtx_3D_loader        ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_2D_vtx_3D");
+    // ana::SpectrumLoader cheated_2D_Vtx_3D_Nu_loader     ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_2D_vtx_3D_Nu");
+    // ana::SpectrumLoader cheated_2D_Vtx_3D_Nu_Mva_loader ("msotgia_v09_89_01_01p03_down_vtx_both_ifdh_reco_cheated_2D_vtx_3D_Nu_mva");
 
     std::map<std::string, ana::SpectrumLoader*> loaders_available = {
-        {"cheated_2D_Vtx_3D_Nu_Mva",    &cheated_2D_Vtx_3D_Nu_Mva_loader},
-        {"cheated_2D_Vtx_3D_Nu",        &cheated_2D_Vtx_3D_Nu_loader},
-        {"cheated_2D_Vtx_3D",           &cheated_2D_Vtx_3D_loader},
-        {"cheated_2D_Vtx",              &cheated_2D_Vtx_loader},
-        {"cheated_2D",                  &cheated_2D_loader},
-        {"nominal_reconstruction",      &nominal_loader}
+        {"nominal",                  &nominal_loader},
+        {"cheated_2d",               &cheated_2d_loader},
+        {"cheated_vtx",              &cheated_vtx_loader},
+        {"cheated_vtxSelection",     &cheated_vtxSelection_loader},
+        {"cheated_3d",               &cheated_3d_loader},
+        {"cheated_nuH",              &cheated_nuH_loader},
+        {"cheated_mva",              &cheated_mva_loader},
+        {"cheated_2d_vtx",           &cheated_2d_vtx_loader},
+        {"cheated_2d_vtx_3d",        &cheated_2d_vtx_3d_loader},
+        {"cheated_2d_vtx_3d_nu",     &cheated_2d_vtx_3d_nu_loader},
+        {"cheated_2d_vtx_3d_nu_mva", &cheated_2d_vtx_3d_nu_mva_loader}
     };
 
     // Running all :)
     std::vector<std::string> running_loaders = {
-        "cheated_2D_Vtx_3D_Nu_Mva",
-        "cheated_2D_Vtx_3D_Nu",
-        "cheated_2D_Vtx_3D",
-        "cheated_2D_Vtx",
-        "cheated_2D",
-        "nominal_reconstruction"
+        "nominal",
+        "cheated_2d",
+        "cheated_vtx",
+        "cheated_vtxSelection",
+        "cheated_3d",
+        "cheated_nuH",
+        "cheated_mva",
+        "cheated_2d_vtx",
+        "cheated_2d_vtx_3d",
+        "cheated_2d_vtx_3d_nu",
+        "cheated_2d_vtx_3d_nu_mva"
     };
 
     std::vector<std::unique_ptr<ana::Tree>> trees;

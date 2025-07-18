@@ -1000,6 +1000,7 @@ namespace cuts {
                 if (var_utils::id_pfp(*slice, ipfp, var_utils::dist_cut) == particle_data::particle_t::shower)  num_showers++;
             } // loop pfp
 
+            // std::cout << "FOUND RECO NUM proton #. " << num_protons << std::endl;
             return num_protons > 1 && num_pions == 0 && num_showers == 0;
         });
 
@@ -1805,6 +1806,7 @@ namespace var_utils {
         } // loop slice->truth.prim
 
         if (num_gamma == 0 && num_pions == 0 && num_neutral_pions == 0) {
+            // std::cout << "FOUND TRUE NUM proton #. " << num_protons_above50 << std::endl;
             if (
                 num_muons == 1 && num_protons_above50 == 1 && 
                 length_muon > 50 && cuts::all_trk_contained_truth(spill, slice)
