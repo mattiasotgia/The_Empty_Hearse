@@ -164,6 +164,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
@@ -179,6 +180,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           && 
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ1p but the cuts rejected this event" << std::endl;
@@ -194,6 +196,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ2p but the cuts rejected this event" << std::endl;
@@ -209,6 +212,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µ3p but the cuts rejected this event" << std::endl;
@@ -224,6 +228,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was TRUE_1µNp (N>=1) but the cuts rejected this event" << std::endl;
@@ -240,6 +245,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1µNp (N>=1) but the cuts rejected this event" << std::endl;
@@ -256,6 +262,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1µN1p (N>1) but the cuts rejected this event" << std::endl;
@@ -272,6 +279,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1mu1p but the cuts rejected this event" << std::endl;
@@ -288,6 +296,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1mu2p but the cuts rejected this event" << std::endl;
@@ -304,6 +313,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1mu3p but the cuts rejected this event" << std::endl;
@@ -320,6 +330,7 @@ namespace var_utils {
                     interaction.all_contained           &&
                     !interaction.unclassified           &&
                     interaction.length_short_proton > proton_length &&
+                    // interaction.length_short_pion > proton_length &&
                     truth_cut(&slice)   
                 )) {
                     if (debug) std::cout << "The mode was BOTH_1mu3p but the cuts rejected this event" << std::endl;
@@ -413,6 +424,10 @@ namespace var_utils {
                 //     continue;
 
                 slice_value = slice_var(&slice);
+
+                // std::cout << "Shortest proton == " 
+                //           << interaction.length_short_proton << " cm > " 
+                //           << proton_length << " cm " << std::endl;
 
                 efficiency.push_back(slice.tmatch.eff);
                 purity.push_back(slice.tmatch.pur);
@@ -1826,7 +1841,8 @@ namespace var_utils {
         interactions.num_neutral_pions = 0;
         interactions.num_gamma = 0;
         interactions.length_muon = 0.;
-        interactions.length_short_proton = 0.;
+        interactions.length_short_proton = 9999.;
+        // interactions.length_short_pion = 9999.;
         interactions.all_contained = cuts::all_trk_contained_truth(spill, slice);
         interactions.unclassified = false;
        
@@ -1862,7 +1878,8 @@ namespace var_utils {
         int num_neutral_pions = 0;
         int num_gamma = 0;
         double length_muon = 0;
-        double length_short_proton = 0;
+        double length_short_proton = 9999;
+        double length_short_pion = 9999;
         double dep_E = 0;
  
         int use_plane = 2;
@@ -1879,6 +1896,9 @@ namespace var_utils {
 
             if (std::abs(prim.pdg) == 211) {
                 num_pions += 1;
+                if (prim.length < length_short_pion && prim.length != 0) {
+                    length_short_pion = prim.length;
+                }
             } // found charged pion, returning
 
             /* Looking at neutral pions: trickier
@@ -1925,10 +1945,18 @@ namespace var_utils {
                 dep_E += prim.plane[prim.cryostat][use_plane].visE * particle_data::GeV;
             } // found proton
 
-            if (std::abs(prim.pdg) == 2212 && dep_E > 50.0)
+            if (std::abs(prim.pdg) == 2212 && dep_E > 50.0) {
                 num_protons_above50 += 1;
-                if (prim.length > length_short_proton)
+                if (prim.length < length_short_proton && prim.length != 0) {
                     length_short_proton = prim.length;
+                }
+                // std::cout << "Looking at proton #." 
+                //     << num_protons_above50 << ", this is " 
+                //     << prim.length << " cm " 
+                //     << "(at this moment length_short_proton = " 
+                //     << length_short_proton << " cm)"
+                //     << std::endl;
+            }
             
             dep_E = 0;
         } // loop slice->truth.prim
@@ -1940,6 +1968,7 @@ namespace var_utils {
         interactions.num_gamma = num_gamma;
         interactions.length_muon = length_muon;
         interactions.length_short_proton = length_short_proton;
+        // interactions.length_short_pion = length_short_pion;
 
         return interactions;
     } // int classification_type

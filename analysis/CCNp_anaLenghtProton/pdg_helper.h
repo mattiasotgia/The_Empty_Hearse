@@ -159,7 +159,7 @@ namespace vars {
             return -9999;
         });
 
-    const ana::MultiVar slice_proton_chi2_mu ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
+        const ana::MultiVar slice_proton_chi2_mu ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
             std::size_t iPfp = 0;
             std::vector<double> chis;
             for (auto const& pfp: slice->reco.pfp) {
@@ -292,7 +292,63 @@ namespace vars {
             }
             return primTag;
         });
+    
+        const ana::Var slice_muonProtonTrueAngle ([](const caf::SRSliceProxy* slice) -> double {
+            std::size_t iPfp = 0.;
+            std::vector<double> cosTheta;
 
+            TVector3 muonDirection, protonDirection;
+            for (auto const& prim: slice->truth.prim) {
+                if (std::abs(prim.pdg) == 13 && prim.length > 50.) {
+                    muonDirection.SetXYZ(
+                        prim.startp.x,
+                        prim.startp.y,
+                        prim.startp.z
+                    );
+                }    
+                if (std::abs(prim.pdg) == 2212 && prim.genE * particle_data::GeV > 50.) {
+                    protonDirection.SetXYZ(
+                        prim.startp.x,
+                        prim.startp.y,
+                        prim.startp.z
+                    );    
+                    cosTheta.push_back(muonDirection.Unit().Dot(protonDirection.Unit()));
+                }
+                iPfp++;
+            }
+
+            if (cosTheta.size() == 0) 
+                return -9999;
+            return *std::min_element(cosTheta.begin(), cosTheta.end());
+        });
+
+        const ana::Var slice_muonProtonRecoAngle ([](const caf::SRSliceProxy* slice) -> double {
+            std::size_t iPfp = 0.;
+            std::vector<double> cosTheta;
+
+            TVector3 muonDirection, protonDirection;
+            for (auto const& pfp: slice->reco.pfp) {
+                if (std::abs(pfp.trk.truth.p.pdg) == 13 && zero_vtXDist(slice, iPfp)) {
+                    muonDirection.SetXYZ(
+                        pfp.trk.dir.x,
+                        pfp.trk.dir.y,
+                        pfp.trk.dir.z
+                    );
+                }    
+                if (std::abs(pfp.trk.truth.p.pdg) == 2212 && zero_vtXDist(slice, iPfp)) {
+                    protonDirection.SetXYZ(
+                        pfp.trk.dir.x,
+                        pfp.trk.dir.y,
+                        pfp.trk.dir.z
+                    );    
+                    cosTheta.push_back(muonDirection.Unit().Dot(protonDirection.Unit()));
+                }
+                iPfp++;
+            }    
+            if (cosTheta.size() == 0) 
+                return -9999;
+            return *std::min_element(cosTheta.begin(), cosTheta.end());
+        });
     }
 } 
 
