@@ -42,15 +42,16 @@ const cut_type_t reco_1uNp = cut_type_t::RECO;
 const ana::SpillCut valid_events ([](const caf::SRSpillProxy *spill) -> bool {
 
     std::vector<unsigned> golden_events = {
-        // 16537
-        473911
+        16537
+        // 473911
     };
     return std::find(golden_events.begin(), golden_events.end(), static_cast<int>(event(spill))) != golden_events.end();
 });
 
 std::vector<std::string> loaders = {
-    "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu",
-    "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d",
+    // "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu",
+    // "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d",
+    "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_nominal"
 };
 
 void CCNp_test () {

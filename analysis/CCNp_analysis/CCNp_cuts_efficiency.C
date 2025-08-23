@@ -69,30 +69,18 @@ const ana::SpillVar spill_true_E_reco_cut_s7      = SPILLVAR(-9999, vars::truth:
 
 void CCNp_cuts_efficiency() {
 
-    ana::SpectrumLoader nominal_loader                     ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_nominal");
-    ana::SpectrumLoader cheated_2d_loader                  ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d");
-    ana::SpectrumLoader cheated_vtx_loader                 ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_vtx");
-    ana::SpectrumLoader cheated_vtxSelection_loader        ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_vtxSelection");
-    ana::SpectrumLoader cheated_3d_loader                  ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_3d");
-    ana::SpectrumLoader cheated_nuH_loader                 ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_nuH");
-    ana::SpectrumLoader cheated_mva_loader                 ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_mva");
-    ana::SpectrumLoader cheated_2d_vtx_loader              ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx");
-    ana::SpectrumLoader cheated_2d_vtx_3d_loader           ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d");
-    ana::SpectrumLoader cheated_2d_vtx_3d_nu_loader        ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu");
-    ana::SpectrumLoader cheated_2d_vtx_3d_nu_mva_loader    ("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu_mva");
-
-    std::map<std::string, ana::SpectrumLoader*> loaders_available = {
-        {"nominal",                  &nominal_loader},
-        {"cheated_2d",               &cheated_2d_loader},
-        {"cheated_vtx",              &cheated_vtx_loader},
-        {"cheated_vtxSelection",     &cheated_vtxSelection_loader},
-        {"cheated_3d",               &cheated_3d_loader},
-        {"cheated_nuH",              &cheated_nuH_loader},
-        {"cheated_mva",              &cheated_mva_loader},
-        {"cheated_2d_vtx",           &cheated_2d_vtx_loader},
-        {"cheated_2d_vtx_3d",        &cheated_2d_vtx_3d_loader},
-        {"cheated_2d_vtx_3d_nu",     &cheated_2d_vtx_3d_nu_loader},
-        {"cheated_2d_vtx_3d_nu_mva", &cheated_2d_vtx_3d_nu_mva_loader}
+    std::map<std::string, std::string> loaders_available = {
+        {"nominal",                  "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_nominal"},
+        {"cheated_2d",               "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d"},
+        {"cheated_vtx",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_vtx"},
+        {"cheated_vtxSelection",     "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_vtxSelection"},
+        {"cheated_3d",               "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_3d"},
+        {"cheated_nuH",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_nu"},
+        {"cheated_mva",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_mva"},
+        {"cheated_2d_vtx",           "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx"},
+        {"cheated_2d_vtx_3d",        "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx_3d"},
+        {"cheated_2d_vtx_3d_nu",     "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx_3d_nu"},
+        {"cheated_2d_vtx_3d_nu_mva", "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx_3d_nu_mva"}
     };
 
     // Running all :)
@@ -114,7 +102,7 @@ void CCNp_cuts_efficiency() {
 
     for (auto const& running_loader: running_loaders) {
         
-        ana::SpectrumLoader& loader = *loaders_available.at(running_loader);
+        ana::SpectrumLoader loader (loaders_available.at(running_loader).c_str());
 
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("reco_true_" + running_loader).c_str(), 

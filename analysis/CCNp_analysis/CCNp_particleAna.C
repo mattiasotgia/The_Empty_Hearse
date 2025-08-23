@@ -74,17 +74,17 @@ void CCNp_particleAna () {
     std::unique_ptr<TFile> file_1muNp(new TFile("CCNp_particleAna.root", "RECREATE"));
 
     std::map<std::string, std::string> loaders_available = {
-        {"nominal",                  "msotgia_v09_89_01_01p03_down_singles_both_ifdh_nominal"},
-        {"cheated_2d",               "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d"},
-        {"cheated_vtx",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_vtx"},
-        {"cheated_vtxSelection",     "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_vtxSelection"},
-        {"cheated_3d",               "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_3d"},
-        {"cheated_nuH",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_nuH"},
-        {"cheated_mva",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_mva"},
-        {"cheated_2d_vtx",           "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx"},
-        {"cheated_2d_vtx_3d",        "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d"},
-        {"cheated_2d_vtx_3d_nu",     "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu"},
-        {"cheated_2d_vtx_3d_nu_mva", "msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d_vtx_3d_nu_mva"}
+        {"nominal",                  "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_nominal"},
+        {"cheated_2d",               "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d"},
+        {"cheated_vtx",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_vtx"},
+        {"cheated_vtxSelection",     "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_vtxSelection"},
+        {"cheated_3d",               "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_3d"},
+        {"cheated_nuH",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_nu"},
+        {"cheated_mva",              "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_mva"},
+        {"cheated_2d_vtx",           "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx"},
+        {"cheated_2d_vtx_3d",        "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx_3d"},
+        {"cheated_2d_vtx_3d_nu",     "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx_3d_nu"},
+        {"cheated_2d_vtx_3d_nu_mva", "msotgia_v09_89_01_01p03_down_singles_both_ifdh_new_2d_vtx_3d_nu_mva"}
     };
 
     // Running all :)
