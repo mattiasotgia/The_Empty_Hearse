@@ -2,6 +2,7 @@
 
 #include "sbnana/CAFAna/Core/Tree.h"
 #include "pdg_helper.h"
+#include "slice_helper.h"
 
 #define SPILLVAR(_def, _var, _reco, _what, _true)                                                                               \
     var_utils::make_spill_from_slice<ana::SpillVar, ana::Var, double>(_def, _var, _reco, _what, _true)
@@ -36,6 +37,8 @@ const ana::SpillVar reco_true_muon_trackScore       = SPILLVAR(-9999, vars::pdg:
 const ana::SpillVar reco_true_muon_completeness     = SPILLVAR(-9999, vars::pdg::slice_muon_completeness,   def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_muon_purity           = SPILLVAR(-9999, vars::pdg::slice_muon_purity,         def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_muonPandoraPrimary    = SPILLVAR(-9999, vars::pdg::slice_muonPandoraPrimary,  def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar reco_true_slcEff                = SPILLVAR(-9999, vars::slice::slice_efficiency,        def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar reco_true_slcPur                = SPILLVAR(-9999, vars::slice::slice_purity,            def_cut, reco_true_1uNp, def_cut_truth);
 
 const ana::SpillVar true_muon_chi2_mu               = SPILLVAR(-9999, vars::pdg::slice_muon_chi2_mu,        def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muon_chi2_proton           = SPILLVAR(-9999, vars::pdg::slice_muon_chi2_p,         def_cut, true_1uNp, def_cut_truth);
@@ -46,6 +49,8 @@ const ana::SpillVar true_muon_trackScore            = SPILLVAR(-9999, vars::pdg:
 const ana::SpillVar true_muon_completeness          = SPILLVAR(-9999, vars::pdg::slice_muon_completeness,   def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muon_purity                = SPILLVAR(-9999, vars::pdg::slice_muon_purity,         def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muonPandoraPrimary         = SPILLVAR(-9999, vars::pdg::slice_muonPandoraPrimary,  def_cut, true_1uNp, def_cut_truth);
+const ana::SpillVar true_slcEff                     = SPILLVAR(-9999, vars::slice::slice_efficiency,        def_cut, true_1uNp, def_cut_truth);
+const ana::SpillVar true_slcPur                     = SPILLVAR(-9999, vars::slice::slice_purity,            def_cut, true_1uNp, def_cut_truth);
 
 const ana::SpillMultiVar reco_true_proton_chi2_mu       = SPILLMULTIVAR({}, vars::pdg::slice_proton_chi2_mu,        def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_proton_chi2_proton   = SPILLMULTIVAR({}, vars::pdg::slice_proton_chi2_p,         def_cut, reco_true_1uNp, def_cut_truth);
@@ -57,6 +62,8 @@ const ana::SpillMultiVar reco_true_proton_completeness  = SPILLMULTIVAR({}, vars
 const ana::SpillMultiVar reco_true_proton_purity        = SPILLMULTIVAR({}, vars::pdg::slice_proton_purity,         def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_proton_depEnergy     = SPILLMULTIVAR({}, vars::pdg::slice_proton_depEnergy,      def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_protonPandoraPrimary = SPILLMULTIVAR({}, vars::pdg::slice_protonPandoraPrimary,  def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillMultiVar reco_true_slcEff_proton        = SPILLMULTIVAR({}, vars::slice_proton::slice_efficiency,   def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillMultiVar reco_true_slcPur_proton        = SPILLMULTIVAR({}, vars::slice_proton::slice_purity,       def_cut, reco_true_1uNp, def_cut_truth);
 
 const ana::SpillMultiVar true_proton_chi2_mu            = SPILLMULTIVAR({}, vars::pdg::slice_proton_chi2_mu,        def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_proton_chi2_proton        = SPILLMULTIVAR({}, vars::pdg::slice_proton_chi2_p,         def_cut, true_1uNp, def_cut_truth);
@@ -68,6 +75,8 @@ const ana::SpillMultiVar true_proton_completeness       = SPILLMULTIVAR({}, vars
 const ana::SpillMultiVar true_proton_purity             = SPILLMULTIVAR({}, vars::pdg::slice_proton_purity,         def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_proton_depEnergy          = SPILLMULTIVAR({}, vars::pdg::slice_proton_depEnergy,      def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_protonPandoraPrimary      = SPILLMULTIVAR({}, vars::pdg::slice_protonPandoraPrimary,  def_cut, true_1uNp, def_cut_truth);
+const ana::SpillMultiVar true_slcEff_proton             = SPILLMULTIVAR({}, vars::slice_proton::slice_efficiency,   def_cut, true_1uNp, def_cut_truth);
+const ana::SpillMultiVar true_slcPur_proton             = SPILLMULTIVAR({}, vars::slice_proton::slice_purity,       def_cut, true_1uNp, def_cut_truth);
 
 void CCNp_particleAna () {
 
@@ -120,7 +129,9 @@ void CCNp_particleAna () {
                 "trackScore",
                 "completeness",
                 "purity",
-                "pandoraPrimary"
+                "pandoraPrimary",
+                "sliceEfficiency", 
+                "slicePurity"
             },
             loader,
             std::vector<ana::SpillVar>{
@@ -133,7 +144,9 @@ void CCNp_particleAna () {
                 reco_true_muon_trackScore,
                 reco_true_muon_completeness,
                 reco_true_muon_purity,
-                reco_true_muonPandoraPrimary
+                reco_true_muonPandoraPrimary,
+                reco_true_slcEff,
+                reco_true_slcPur
             }, 
             cuts::reco::spill_CRTPMTNeutrino,
             true
@@ -151,7 +164,9 @@ void CCNp_particleAna () {
                 "trackScore",
                 "completeness",
                 "purity",
-                "pandoraPrimary"
+                "pandoraPrimary",
+                "sliceEfficiency", 
+                "slicePurity"
             }, 
             loader,
             std::vector<ana::SpillVar>{
@@ -164,7 +179,9 @@ void CCNp_particleAna () {
                 true_muon_trackScore,
                 true_muon_completeness,
                 true_muon_purity,
-                true_muonPandoraPrimary
+                true_muonPandoraPrimary,
+                true_slcEff,
+                true_slcPur
             }, 
             cuts::reco::spill_CRTPMTNeutrino,
             true
@@ -183,7 +200,9 @@ void CCNp_particleAna () {
                 "completeness",
                 "purity",
                 "depEnergy",
-                "pandoraPrimary"
+                "pandoraPrimary",
+                "sliceEfficiency", 
+                "slicePurity"
             },
             loader,
             std::vector<ana::SpillMultiVar>{
@@ -197,7 +216,9 @@ void CCNp_particleAna () {
                 reco_true_proton_completeness,
                 reco_true_proton_purity,
                 reco_true_proton_depEnergy,
-                reco_true_protonPandoraPrimary
+                reco_true_protonPandoraPrimary,
+                reco_true_slcEff_proton,
+                reco_true_slcPur_proton
             }, 
             cuts::reco::spill_CRTPMTNeutrino,
             true
@@ -216,7 +237,9 @@ void CCNp_particleAna () {
                 "completeness",
                 "purity",
                 "depEnergy",
-                "pandoraPrimary"
+                "pandoraPrimary",
+                "sliceEfficiency", 
+                "slicePurity"
             }, 
             loader,
             std::vector<ana::SpillMultiVar>{
@@ -230,7 +253,9 @@ void CCNp_particleAna () {
                 true_proton_completeness,
                 true_proton_purity,
                 true_proton_depEnergy,
-                true_protonPandoraPrimary
+                true_protonPandoraPrimary,
+                true_slcEff_proton,
+                true_slcPur_proton
             }, 
             cuts::reco::spill_CRTPMTNeutrino,
             true

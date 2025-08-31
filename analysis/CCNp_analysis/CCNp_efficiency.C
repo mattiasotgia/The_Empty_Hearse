@@ -3,6 +3,7 @@
 
 #include "helper.h"
 #include "selection.h"
+#include "slice_helper.h"
 
 #include "sbnana/CAFAna/Core/Tree.h"
 #include <map>
@@ -35,16 +36,22 @@ const cut_type_t reco_1uNp = cut_type_t::RECO;
 const ana::SpillVar spill_reco_E_reco_true_cut  = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar spill_true_E_reco_true_cut  = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar spill_reco_pT_reco_true_cut = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar spill_slcEff_reco_true_cut  = SPILLVAR(-9999, vars::slice::slice_efficiency,            def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar spill_slcPur_reco_true_cut  = SPILLVAR(-9999, vars::slice::slice_purity,                def_cut, reco_true_1uNp, def_cut_truth);
 
 // true only
 const ana::SpillVar spill_reco_E_true_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, true_1uNp, def_cut_truth); 
 const ana::SpillVar spill_true_E_true_cut       = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, true_1uNp, def_cut_truth); 
-const ana::SpillVar spill_reco_pT_true_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, true_1uNp, def_cut_truth); 
+const ana::SpillVar spill_reco_pT_true_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, true_1uNp, def_cut_truth);
+const ana::SpillVar spill_slcEff_true_cut       = SPILLVAR(-9999, vars::slice::slice_efficiency,            def_cut, true_1uNp, def_cut_truth); 
+const ana::SpillVar spill_slcPur_true_cut       = SPILLVAR(-9999, vars::slice::slice_purity,                def_cut, true_1uNp, def_cut_truth); 
 
 // reco only
 const ana::SpillVar spill_reco_E_reco_cut       = SPILLVAR(-9999, vars::reco::slice_neutrino_energy_1muNp,  def_cut, reco_1uNp, def_cut_truth);
 const ana::SpillVar spill_true_E_reco_cut       = SPILLVAR(-9999, vars::truth::slice_neutrino_energy,       def_cut, reco_1uNp, def_cut_truth);
 const ana::SpillVar spill_reco_pT_reco_cut      = SPILLVAR(-9999, vars::reco::slice_neutrino_pT_1muNp,      def_cut, reco_1uNp, def_cut_truth);
+const ana::SpillVar spill_slcEff_reco_cut       = SPILLVAR(-9999, vars::slice::slice_efficiency,            def_cut, reco_1uNp, def_cut_truth);
+const ana::SpillVar spill_slcPur_reco_cut       = SPILLVAR(-9999, vars::slice::slice_purity,                def_cut, reco_1uNp, def_cut_truth);
 
 void CCNp_efficiency() {
 
@@ -85,23 +92,23 @@ void CCNp_efficiency() {
 
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("reco_true_" + running_loader).c_str(), 
-            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT", "sliceEfficiency", "slicePurity"}, 
             loader,
-            std::vector<ana::SpillVar>{event, spill_reco_E_reco_true_cut, spill_true_E_reco_true_cut, spill_reco_pT_reco_true_cut},
+            std::vector<ana::SpillVar>{event, spill_reco_E_reco_true_cut, spill_true_E_reco_true_cut, spill_reco_pT_reco_true_cut, spill_slcEff_reco_true_cut,spill_slcPur_reco_true_cut},
             cuts::reco::spill_CRTPMTNeutrino
         ));
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("reco_" + running_loader).c_str(), 
-            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT", "sliceEfficiency", "slicePurity"}, 
             loader,
-            std::vector<ana::SpillVar>{event, spill_reco_E_reco_cut, spill_true_E_reco_cut, spill_reco_pT_reco_cut},
+            std::vector<ana::SpillVar>{event, spill_reco_E_reco_cut, spill_true_E_reco_cut, spill_reco_pT_reco_cut, spill_slcEff_reco_cut, spill_slcPur_reco_cut},
             cuts::reco::spill_CRTPMTNeutrino
         ));
         trees.emplace_back(std::make_unique<ana::Tree>(
             ("true_" + running_loader).c_str(), 
-            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT"}, 
+            std::vector<std::string>{"event", "reco_E", "true_E", "reco_pT", "sliceEfficiency", "slicePurity"}, 
             loader,
-            std::vector<ana::SpillVar>{event, spill_reco_E_true_cut, spill_true_E_true_cut, spill_reco_pT_true_cut},
+            std::vector<ana::SpillVar>{event, spill_reco_E_true_cut, spill_true_E_true_cut, spill_reco_pT_true_cut, spill_slcEff_true_cut, spill_slcPur_true_cut},
             cuts::reco::spill_CRTPMTNeutrino
         ));
 
