@@ -57,16 +57,16 @@ void CCNp_efficiencyNoNu_cheatingSlice() {
 
     // I fucked up all :)
     std::map<std::string, std::string> loaders_available = {
-        {"nominal",                       "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_nominal"},
-        {"cheated_2d",                    "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_vtx_3d_mva"},
-        {"cheated_2d_vt",                 "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_vtx_3d"},
-        {"cheated_2d_vtx_3d",             "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_vtx"},
-        {"cheated_2d_vtx_3d_mva",         "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d"},
-        {"cheated_slicing",               "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_slicing"},
-        {"cheated_2d_slicing",            "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_vtx_3d_mva_slicing"},
-        {"cheated_2d_vt_slicing",         "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_vtx_3d_slicing"},
-        {"cheated_2d_vtx_3d_slicing",     "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_vtx_slicing"},
-        {"cheated_2d_vtx_3d_mva_slicing", "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_2d_slicing"}
+        {"nominal",                       "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_nominal"},
+        {"cheated_2d",                    "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d"},
+        {"cheated_2d_vt",                 "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_vtx"},
+        {"cheated_2d_vtx_3d",             "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_vtx_3d"},
+        {"cheated_2d_vtx_3d_mva",         "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_vtx_3d_mva"},
+        {"cheated_slicing",               "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_slice"},
+        {"cheated_2d_slicing",            "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_slice"},
+        {"cheated_2d_vt_slicing",         "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_vtx_slice"},
+        {"cheated_2d_vtx_3d_slicing",     "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_vtx_3d_slice"},
+        {"cheated_2d_vtx_3d_mva_slicing", "msotgia_v09_89_01_01p03_down_slicing_ifdh_nonu_respun_cheated_2d_vtx_3d_mva_slice"}
     };
 
     // Running all :)

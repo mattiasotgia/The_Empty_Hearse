@@ -140,6 +140,8 @@ namespace var_utils {
             int selected_slices = 0;
             A slice_value = __def_ret;
             bool debug = false;
+
+            std::vector<std::pair<double, A>> toOrderSlice;
     
             std::vector<double> efficiency;
             std::vector<double> purity;
@@ -401,6 +403,8 @@ namespace var_utils {
 
                 slice_value = slice_var(&slice);
 
+                toOrderSlice.push_back(std::make_pair(slice.tmatch.eff, slice_value));
+
                 efficiency.push_back(slice.tmatch.eff);
                 purity.push_back(slice.tmatch.pur);
 
@@ -408,19 +412,42 @@ namespace var_utils {
             } // loop spill->slc
         
             if (selected_slices > 1) {
-                logger::log(level_t::error) << "Something wrong with run:event = " 
-                                            << run(spill) << ":" << event(spill) 
-                                            << " => found " << selected_slices
-                                            << " slice(s) 1µNp"
-                                            << std::endl;
-                std::cout << "eff : {";
-                for (auto const& eff: efficiency) std::cout << eff << ", ";
-                std::cout << "}" << std::endl;
 
-                std::cout << "pur : {";
-                for (auto const& pur: purity) std::cout << pur << ", ";
-                std::cout << "}" << std::endl;
+                if (debug) {
+                    logger::log(level_t::error) << "Something wrong with run:event = " 
+                                                << run(spill) << ":" << event(spill) 
+                                                << " => found " << selected_slices
+                                                << " slice(s) 1µNp"
+                                                << std::endl;
+                    std::cout << "eff : {";
+                    for (auto const& eff: efficiency) std::cout << eff << ", ";
+                    std::cout << "}" << std::endl;
+    
+                    std::cout << "pur : {";
+                    for (auto const& pur: purity) std::cout << pur << ", ";
+                    std::cout << "}" << std::endl;
+    
+                    std::cout << "pre-sorting: " << std::endl;
+                    // for (unsigned i=0; i < toOrderSlice.size(); i++) {
+                    //     std::cout << " [" << i << "]" << " (eff = " << toOrderSlice[i].first << ", value = " << toOrderSlice[i].second << ")" << std::endl;
+                    // }
+                }
+
+                std::sort(std::begin(toOrderSlice), std::end(toOrderSlice), 
+                [&](const auto& a, const auto& b) {
+                    return a.first > b.first;
+                });
+
+                slice_value = toOrderSlice.at(0).second;
+                
+                if (debug) {
+                    std::cout << "sorting returned: " << std::endl;
+                    // for (unsigned i=0; i < toOrderSlice.size(); i++) {
+                    //     std::cout << " [" << i << "]" << " (eff = " << toOrderSlice[i].first << ", value = " << toOrderSlice[i].second << ")" << std::endl;
+                    // }
+                }
             }
+
             return slice_value;
         });
     }

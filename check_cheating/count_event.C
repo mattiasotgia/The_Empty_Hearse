@@ -48,17 +48,8 @@ ana::SpillVar get_event_cheated([](const caf::SRSpillProxy *sr) -> double {
 
 void count_event () {
 
-    // ana::SpectrumLoader non_cheated("msotgia_v09_89_01_01p03_BNB_production_non_cheated_reco_ana_stage1tocaf_flatcafs");
-    // ana::SpectrumLoader cheated("msotgia_v09_89_01_01p03_BNB_production_cheated_reco_ana_stage1tocaf_flatcafs");
-
-    // ana::Spectrum non_cheated_spectrum("", simple, non_cheated, get_event_non_cheated, ana::kNoSpillCut);
-    // ana::Spectrum cheated_spectrum("", simple, cheated, get_event_cheated, ana::kNoSpillCut);
-
-    // non_cheated.Go();
-    // cheated.Go();
-
-    ana::SpectrumLoader cheated_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_stage1tocaf_cheated_flatcaf");
-    ana::SpectrumLoader nominal_loader("msotgia_v09_89_01_01p03_stage1_to_caf_reco_ana_stage1tocaf_nominal_flatcaf");
+    ana::SpectrumLoader cheated_loader("msotgia_v09_89_01_01p03_down_singles_both_ifdh_cheated_2d");
+    ana::SpectrumLoader nominal_loader("msotgia_v09_89_01_01p03_down_singles_both_ifdh_nominal");
     
     ana::Tree cheated_tree("cheated", {"run", "subrun", "event"}, cheated_loader, {run, subrun, event}, ana::kNoSpillCut);
     cheated_loader.Go();
