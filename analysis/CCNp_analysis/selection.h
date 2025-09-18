@@ -134,7 +134,10 @@ namespace var_utils {
         const T &slice_var, 
         const ana::Cut &reco_cut = ana::kNoCut,  
         cut_type_t what_to_cut_on = cut_type_t::RECO,
-        const ana::Cut &truth_cut = ana::kNoCut
+        const ana::Cut &truth_cut = ana::kNoCut,
+        std::function<particle_data::int_type_t(
+            const caf::SRSpillProxy*, const caf::SRSliceProxy*
+        ) classification = var_utils::classification_type
     ) {
         return R([=](const caf::SRSpillProxy *spill) -> A {
             int selected_slices = 0;
