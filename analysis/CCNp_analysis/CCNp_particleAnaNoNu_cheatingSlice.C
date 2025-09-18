@@ -37,6 +37,7 @@ const ana::SpillVar reco_true_muon_trackScore       = SPILLVAR(-9999, vars::pdg:
 const ana::SpillVar reco_true_muon_completeness     = SPILLVAR(-9999, vars::pdg::slice_muon_completeness,   def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_muon_purity           = SPILLVAR(-9999, vars::pdg::slice_muon_purity,         def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_muonPandoraPrimary    = SPILLVAR(-9999, vars::pdg::slice_muonPandoraPrimary,  def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar reco_true_muon_nhit             = SPILLVAR(-9999, vars::pdg::slice_muon_nhit,           def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_slcEff                = SPILLVAR(-9999, vars::slice::slice_efficiency,        def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_slcPur                = SPILLVAR(-9999, vars::slice::slice_purity,            def_cut, reco_true_1uNp, def_cut_truth);
 
@@ -49,6 +50,7 @@ const ana::SpillVar true_muon_trackScore            = SPILLVAR(-9999, vars::pdg:
 const ana::SpillVar true_muon_completeness          = SPILLVAR(-9999, vars::pdg::slice_muon_completeness,   def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muon_purity                = SPILLVAR(-9999, vars::pdg::slice_muon_purity,         def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muonPandoraPrimary         = SPILLVAR(-9999, vars::pdg::slice_muonPandoraPrimary,  def_cut, true_1uNp, def_cut_truth);
+const ana::SpillVar true_muon_nhit                  = SPILLVAR(-9999, vars::pdg::slice_muon_nhit,           def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_slcEff                     = SPILLVAR(-9999, vars::slice::slice_efficiency,        def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_slcPur                     = SPILLVAR(-9999, vars::slice::slice_purity,            def_cut, true_1uNp, def_cut_truth);
 
@@ -62,6 +64,7 @@ const ana::SpillMultiVar reco_true_proton_completeness  = SPILLMULTIVAR({}, vars
 const ana::SpillMultiVar reco_true_proton_purity        = SPILLMULTIVAR({}, vars::pdg::slice_proton_purity,         def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_proton_depEnergy     = SPILLMULTIVAR({}, vars::pdg::slice_proton_depEnergy,      def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_protonPandoraPrimary = SPILLMULTIVAR({}, vars::pdg::slice_protonPandoraPrimary,  def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillMultiVar reco_true_proton_hnit          = SPILLMULTIVAR({}, vars::pdg::slice_proton_nhit,           def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_slcEff_proton        = SPILLMULTIVAR({}, vars::slice_proton::slice_efficiency,   def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_slcPur_proton        = SPILLMULTIVAR({}, vars::slice_proton::slice_purity,       def_cut, reco_true_1uNp, def_cut_truth);
 
@@ -75,8 +78,41 @@ const ana::SpillMultiVar true_proton_completeness       = SPILLMULTIVAR({}, vars
 const ana::SpillMultiVar true_proton_purity             = SPILLMULTIVAR({}, vars::pdg::slice_proton_purity,         def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_proton_depEnergy          = SPILLMULTIVAR({}, vars::pdg::slice_proton_depEnergy,      def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_protonPandoraPrimary      = SPILLMULTIVAR({}, vars::pdg::slice_protonPandoraPrimary,  def_cut, true_1uNp, def_cut_truth);
+const ana::SpillMultiVar true_proton_hnit               = SPILLMULTIVAR({}, vars::pdg::slice_proton_nhit,           def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_slcEff_proton             = SPILLMULTIVAR({}, vars::slice_proton::slice_efficiency,   def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_slcPur_proton             = SPILLMULTIVAR({}, vars::slice_proton::slice_purity,       def_cut, true_1uNp, def_cut_truth);
+
+const ana::SpillVar CCNp_true ([](const caf::SRSpillProxy *spill) -> double {
+    
+    int num_protons_above50 = 0;
+    int num_muons = 0;
+    int num_pions = 0;
+    int num_neutral_pions = 0;
+    int num_gamma = 0;
+    double length_muon = 0;
+    double dep_E = 0;
+
+    int G4ID_parent;
+    int use_plane = 2;
+
+    for (auto const& slice: spill->slc) {
+        particle_data::int_type_t interaction = var_utils::classification_type(spill, &slice);
+        if (
+            interaction.num_protons_above50 > 0 &&
+            interaction.num_muons == 1          &&
+            interaction.num_pions == 0          &&
+            interaction.num_neutral_pions == 0  &&
+            interaction.num_gamma == 0          &&
+            interaction.length_muon > 50.       &&
+            interaction.all_contained           &&
+            !interaction.unclassified           &&
+            def_cut_truth(&slice)
+        ) {
+            return interaction.num_protons_above50;
+        }
+    }
+    return num_protons_above50;
+});
 
 void CCNp_particleAnaNoNu_cheatingSlice () {
 
@@ -110,7 +146,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
         "cheated_2d_vtx_3d_mva_slicing"
     };
 
-    std::vector<std::unique_ptr<ana::Tree>> trees_muons, trees_protons;
+    std::vector<std::unique_ptr<ana::Tree>> trees_muons, trees_protons, trees_misc;
 
     for (auto const& running_loader: running_loaders) {
         
@@ -129,6 +165,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "completeness",
                 "purity",
                 "pandoraPrimary",
+                "nhit",
                 "sliceEfficiency", 
                 "slicePurity"
             },
@@ -144,8 +181,9 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 reco_true_muon_completeness,
                 reco_true_muon_purity,
                 reco_true_muonPandoraPrimary,
+                reco_true_muon_nhit,
                 reco_true_slcEff,
-                reco_true_slcPur
+                reco_true_slcPur,
             }, 
             cuts::reco::spill_CRTPMTNeutrino,
             true
@@ -164,6 +202,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "completeness",
                 "purity",
                 "pandoraPrimary",
+                "nhit",
                 "sliceEfficiency", 
                 "slicePurity"
             }, 
@@ -179,6 +218,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 true_muon_completeness,
                 true_muon_purity,
                 true_muonPandoraPrimary,
+                true_muon_nhit,
                 true_slcEff,
                 true_slcPur
             }, 
@@ -200,6 +240,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "purity",
                 "depEnergy",
                 "pandoraPrimary",
+                "nhit",
                 "sliceEfficiency", 
                 "slicePurity"
             },
@@ -216,6 +257,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 reco_true_proton_purity,
                 reco_true_proton_depEnergy,
                 reco_true_protonPandoraPrimary,
+                reco_true_proton_hnit,
                 reco_true_slcEff_proton,
                 reco_true_slcPur_proton
             }, 
@@ -237,6 +279,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "purity",
                 "depEnergy",
                 "pandoraPrimary",
+                "nhit",
                 "sliceEfficiency", 
                 "slicePurity"
             }, 
@@ -253,10 +296,24 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 true_proton_purity,
                 true_proton_depEnergy,
                 true_protonPandoraPrimary,
+                true_proton_hnit,
                 true_slcEff_proton,
                 true_slcPur_proton
             }, 
             cuts::reco::spill_CRTPMTNeutrino,
+            true
+        ));
+
+        trees_misc.emplace_back(std::make_unique<ana::Tree>(
+            ("Np_ "+ running_loader).c_str(),
+            std::vector<std::string>{
+                "Np"
+            }, 
+            loader,
+            std::vector<ana::SpillVar>{
+                CCNp_true
+            },
+            ana::kNoSpillCut,
             true
         ));
 
@@ -271,5 +328,9 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
     file_1muNp->mkdir("protons");
     for (auto const& tree: trees_protons) 
         tree->SaveTo(file_1muNp->GetDirectory("protons"));
+
+    file_1muNp->mkdir("misc");
+    for (auto const& tree: trees_misc) 
+        tree->SaveTo(file_1muNp->GetDirectory("misc"));
 
 }

@@ -159,7 +159,18 @@ namespace vars {
             return -9999;
         });
 
-    const ana::MultiVar slice_proton_chi2_mu ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
+        const ana::Var slice_muon_nhit ([](const caf::SRSliceProxy* slice) -> double {
+            std::size_t iPfp = 0;
+            int use_plane = 2;
+            for (auto const& pfp: slice->reco.pfp) {
+                if (std::abs(pfp.trk.truth.p.pdg) == 13 && zero_vtXDist(slice, iPfp)) 
+                    return pfp.trk.calo[use_plane].nhit;
+                iPfp++;
+            }
+            return -9999;
+        });
+
+        const ana::MultiVar slice_proton_chi2_mu ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
             std::size_t iPfp = 0;
             std::vector<double> chis;
             for (auto const& pfp: slice->reco.pfp) {
@@ -254,6 +265,18 @@ namespace vars {
             for (auto const& pfp: slice->reco.pfp) {
                 if (std::abs(pfp.trk.truth.p.pdg) == 2212 && zero_vtXDist(slice, iPfp)) 
                     hits.push_back(pfp.trk.truth.bestmatch.hit_purity);
+                iPfp++;
+            }
+            return hits;
+        });
+
+        const ana::MultiVar slice_proton_nhit ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
+            std::size_t iPfp = 0;
+            std::vector<double> hits;
+            int use_plane = 2;
+            for (auto const& pfp: slice->reco.pfp) {
+                if (std::abs(pfp.trk.truth.p.pdg) == 2212 && zero_vtXDist(slice, iPfp)) 
+                    hits.push_back(pfp.trk.calo[use_plane].nhit);
                 iPfp++;
             }
             return hits;
