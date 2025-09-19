@@ -21,6 +21,20 @@
 #include <vector>
 
 namespace vars {
+    namespace truth {
+        const ana::Var slice_vertexX([](const caf::SRSliceProxy* slice) -> double {
+            return slice->truth.position.x;
+        });
+
+        const ana::Var slice_vertexY([](const caf::SRSliceProxy* slice) -> double {
+            return slice->truth.position.y;
+        });
+
+        const ana::Var slice_vertexZ([](const caf::SRSliceProxy* slice) -> double {
+            return slice->truth.position.z;
+        });
+    }
+
     namespace pdg {
 
         var_utils::chi2 get_chi2 (const caf::SRSliceProxy* slice, const std::size_t& iPfp, const int& usePlane = 2) {
@@ -159,7 +173,7 @@ namespace vars {
             return -9999;
         });
 
-        const ana::Var slice_muon_nhit ([](const caf::SRSliceProxy* slice) -> double {
+            const ana::Var slice_muon_nhit ([](const caf::SRSliceProxy* slice) -> double {
             std::size_t iPfp = 0;
             int use_plane = 2;
             for (auto const& pfp: slice->reco.pfp) {
@@ -315,6 +329,30 @@ namespace vars {
             }
             return primTag;
         });
+
+        namespace visualScanning {
+            const ana::Var slice_shortestProtonLength ([](const caf::SRSliceProxy* slice) -> double {
+                double protonLength = 9999;
+                for (auto const& prim: slice->truth.prim) {
+                    if (std::abs(prim.pdg) == 2212) {
+                        if (prim.length < protonLength) 
+                            protonLength = prim.length;
+                    }
+                }
+                return protonLength;
+            });
+
+            const ana::Var slice_muon_length ([](const caf::SRSliceProxy* slice) -> double {
+                for (auto const& prim: slice->truth.prim) {
+                    if (std::abs(prim.pdg) == 13) {
+                        // std::cout << "This is 13 (µ) and primary, pfp.trk.truth.p.parent = " 
+                        //           << pfp.trk.truth.p.parent << std::endl; ////////////////////////////////////// COMMENT THIS OUT JUST AFTER CHECK
+                        return prim.length;
+                    }
+                }
+                return -9999;
+            });
+        }
 
     }
 } 
