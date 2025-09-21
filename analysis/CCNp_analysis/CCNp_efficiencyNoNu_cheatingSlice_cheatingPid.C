@@ -26,11 +26,11 @@ const ana::Cut def_cut = (
 );
 
 const ana::Cut cheat_cut = (
-    cheatPid::cheatMuonCut && cheatPid::CheatAllCut_1uNp && 
+    cheatPid::cheatMuonCut && cheatPid::cheatAllCut_1uNp && 
     cuts::reco::slice_vtx_in_FV         &&
     cuts::reco::slice_barycenter        &&
     cuts::reco::slice_all_trk_contained
-)
+);
 
 const ana::Cut def_cut_truth = (
     cuts::truth::slice_vtx_in_FV

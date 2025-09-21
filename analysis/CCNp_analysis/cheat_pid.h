@@ -38,7 +38,7 @@ namespace cheatPid {
                 cuts::in_contained (slice.reco.pfp[ipfp].trk.end.x, slice.reco.pfp[ipfp].trk.end.y, slice.reco.pfp[ipfp].trk.end.z, 5.) && // separate Cut below
                 slice.reco.pfp[ipfp].trk.end.x * slice.vertex.x > 0 && 
                 slice.reco.pfp[ipfp].parent_is_primary && 
-                std::abs(slice.reco.pfp[ipfp].trk.p.pdg) == 13
+                std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) == 13
             ) {
                 max_length = slice.reco.pfp[ipfp].trk.len;
                 ipfp_mu = ipfp;
@@ -105,7 +105,7 @@ namespace cheatPid {
             // Skip low energy tagged pions
             TVector3 start_mom_V3;
         
-            if (std::abs(slice.reco.pfp[ipfp].trk.p.pdg) == 211) // pions
+            if (std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) == 211) // pions
                 start_mom_V3.SetXYZ(
                     slice.reco.pfp[ipfp].trk.rangeP.p_pion * slice.reco.pfp[ipfp].trk.dir.x, 
                     slice.reco.pfp[ipfp].trk.rangeP.p_pion * slice.reco.pfp[ipfp].trk.dir.y, 
@@ -113,17 +113,17 @@ namespace cheatPid {
                 );
             
             if (
-                std::abs(slice.reco.pfp[ipfp].trk.p.pdg) == 211 && 
+                std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) == 211 && 
                 (rec_vtx - start).Mag() < dist_cut  && 
                 std::sqrt ( 
                     std::pow(particle_data::masses::pion, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) 
                 ) - particle_data::masses::pion >= 25.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary &&
-                (slice.reco.pfp[ipfp].p.genE * particle_data::GeV - particle_data::masses::pion) >= 25.0
+                (slice.reco.pfp[ipfp].trk.truth.p.genE * particle_data::GeV - particle_data::masses::pion) >= 25.0
             )  return particle_data::particle_t::pion;
 
             // Skip low energy protons
-            if (std::abs(slice.reco.pfp[ipfp].trk.p.pdg) == 2212)
+            if (std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) == 2212)
                 start_mom_V3.SetXYZ(
                     slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.x, 
                     slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.y, 
@@ -131,19 +131,19 @@ namespace cheatPid {
                 );
 
             if (
-                std::abs(slice.reco.pfp[ipfp].trk.p.pdg) == 2212 && 
+                std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) == 2212 && 
                 (rec_vtx - start).Mag() < dist_cut  && 
                 std::sqrt ( 
                     std::pow(particle_data::masses::proton, 2) + std::pow(start_mom_V3.Mag() * particle_data::GeV, 2) 
                 ) - particle_data::masses::proton >= 50.0 && 
                 slice.reco.pfp[ipfp].parent_is_primary && 
-                (slice.reco.pfp[ipfp].p.genE * particle_data::GeV - particle_data::masses::proton) >= 50.0
+                (slice.reco.pfp[ipfp].trk.truth.p.genE * particle_data::GeV - particle_data::masses::proton) >= 50.0
             ) return particle_data::particle_t::proton;
 
         }
 
         if (slice.reco.pfp[ipfp].trackScore < 0.5) {
-            if (slice.reco.pfp[ipfp].trackScore >= 0.4 && std::abs(slice.reco.pfp[ipfp].trk.p.pdg) == 2212) {
+            if (slice.reco.pfp[ipfp].trackScore >= 0.4 && std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) == 2212) {
                 TVector3 start_mom_V3_2;
                 start_mom_V3_2.SetXYZ(
                     slice.reco.pfp[ipfp].trk.rangeP.p_proton * slice.reco.pfp[ipfp].trk.dir.x, 
@@ -157,11 +157,11 @@ namespace cheatPid {
                     ) - particle_data::masses::proton >= 50.0 && 
                     (rec_vtx - start).Mag() < dist_cut && 
                     slice.reco.pfp[ipfp].parent_is_primary && 
-                    (slice.reco.pfp[ipfp].p.genE * particle_data::GeV - particle_data::masses::proton) >= 50.0
+                    (slice.reco.pfp[ipfp].trk.truth.p.genE * particle_data::GeV - particle_data::masses::proton) >= 50.0
                 ) return particle_data::particle_t::proton;
             }
 
-            if (!(slice.reco.pfp[ipfp].trackScore >= 0.4 && std::abs(slice.reco.pfp[ipfp].trk.p.pdg) != 2212)) {
+            if (!(slice.reco.pfp[ipfp].trackScore >= 0.4 && std::abs(slice.reco.pfp[ipfp].trk.truth.p.pdg) != 2212)) {
 
                 // int use_plane2 = slice.reco.pfp[ipfp].trk.calo[2].nhit>slice.reco.pfp[ipfp].trk.calo[1].nhit ? 2:1;
                 int use_plane2 = 2;
@@ -170,13 +170,13 @@ namespace cheatPid {
                     return particle_data::particle_t::undefined;
                 if (
                     slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV < 25.0 && 
-                    (slice.reco.pfp[ipfp].p.genE * particle_data::GeV) < 25.0
+                    (slice.reco.pfp[ipfp].trk.truth.p.genE * particle_data::GeV) < 25.0
                 )
                     return particle_data::particle_t::low_energy;
                 if (
                     slice.reco.pfp[ipfp].shw.plane[use_plane2].energy * particle_data::GeV > 25.0 && 
                     slice.reco.pfp[ipfp].parent_is_primary && 
-                    (slice.reco.pfp[ipfp].p.genE * particle_data::GeV) > 25.0
+                    (slice.reco.pfp[ipfp].trk.truth.p.genE * particle_data::GeV) > 25.0
                 )
                     return particle_data::particle_t::shower;
             }
