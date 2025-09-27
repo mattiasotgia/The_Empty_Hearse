@@ -38,6 +38,7 @@ const ana::SpillVar reco_true_muon_completeness     = SPILLVAR(-9999, vars::pdg:
 const ana::SpillVar reco_true_muon_purity           = SPILLVAR(-9999, vars::pdg::slice_muon_purity,         def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_muonPandoraPrimary    = SPILLVAR(-9999, vars::pdg::slice_muonPandoraPrimary,  def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_muon_nhit             = SPILLVAR(-9999, vars::pdg::slice_muon_nhit,           def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillVar reco_true_muonRRatio            = SPILLVAR(-9999, vars::pdg::slice_muonRRatio,          def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_slcEff                = SPILLVAR(-9999, vars::slice::slice_efficiency,        def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillVar reco_true_slcPur                = SPILLVAR(-9999, vars::slice::slice_purity,            def_cut, reco_true_1uNp, def_cut_truth);
 
@@ -51,6 +52,7 @@ const ana::SpillVar true_muon_completeness          = SPILLVAR(-9999, vars::pdg:
 const ana::SpillVar true_muon_purity                = SPILLVAR(-9999, vars::pdg::slice_muon_purity,         def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muonPandoraPrimary         = SPILLVAR(-9999, vars::pdg::slice_muonPandoraPrimary,  def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_muon_nhit                  = SPILLVAR(-9999, vars::pdg::slice_muon_nhit,           def_cut, true_1uNp, def_cut_truth);
+const ana::SpillVar true_muonRRatio                 = SPILLVAR(-9999, vars::pdg::slice_muonRRatio,          def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_slcEff                     = SPILLVAR(-9999, vars::slice::slice_efficiency,        def_cut, true_1uNp, def_cut_truth);
 const ana::SpillVar true_slcPur                     = SPILLVAR(-9999, vars::slice::slice_purity,            def_cut, true_1uNp, def_cut_truth);
 
@@ -65,6 +67,7 @@ const ana::SpillMultiVar reco_true_proton_purity        = SPILLMULTIVAR({}, vars
 const ana::SpillMultiVar reco_true_proton_depEnergy     = SPILLMULTIVAR({}, vars::pdg::slice_proton_depEnergy,      def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_protonPandoraPrimary = SPILLMULTIVAR({}, vars::pdg::slice_protonPandoraPrimary,  def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_proton_hnit          = SPILLMULTIVAR({}, vars::pdg::slice_proton_nhit,           def_cut, reco_true_1uNp, def_cut_truth);
+const ana::SpillMultiVar reco_true_protonRRatio         = SPILLMULTIVAR({}, vars::pdg::slice_protonRRatio,          def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_slcEff_proton        = SPILLMULTIVAR({}, vars::slice_proton::slice_efficiency,   def_cut, reco_true_1uNp, def_cut_truth);
 const ana::SpillMultiVar reco_true_slcPur_proton        = SPILLMULTIVAR({}, vars::slice_proton::slice_purity,       def_cut, reco_true_1uNp, def_cut_truth);
 
@@ -79,6 +82,7 @@ const ana::SpillMultiVar true_proton_purity             = SPILLMULTIVAR({}, vars
 const ana::SpillMultiVar true_proton_depEnergy          = SPILLMULTIVAR({}, vars::pdg::slice_proton_depEnergy,      def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_protonPandoraPrimary      = SPILLMULTIVAR({}, vars::pdg::slice_protonPandoraPrimary,  def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_proton_hnit               = SPILLMULTIVAR({}, vars::pdg::slice_proton_nhit,           def_cut, true_1uNp, def_cut_truth);
+const ana::SpillMultiVar true_protonRRatio              = SPILLMULTIVAR({}, vars::pdg::slice_protonRRatio,          def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_slcEff_proton             = SPILLMULTIVAR({}, vars::slice_proton::slice_efficiency,   def_cut, true_1uNp, def_cut_truth);
 const ana::SpillMultiVar true_slcPur_proton             = SPILLMULTIVAR({}, vars::slice_proton::slice_purity,       def_cut, true_1uNp, def_cut_truth);
 
@@ -166,6 +170,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "purity",
                 "pandoraPrimary",
                 "nhit",
+                "R",
                 "sliceEfficiency", 
                 "slicePurity"
             },
@@ -182,6 +187,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 reco_true_muon_purity,
                 reco_true_muonPandoraPrimary,
                 reco_true_muon_nhit,
+                reco_true_muonRRatio,
                 reco_true_slcEff,
                 reco_true_slcPur,
             }, 
@@ -203,6 +209,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "purity",
                 "pandoraPrimary",
                 "nhit",
+                "R",
                 "sliceEfficiency", 
                 "slicePurity"
             }, 
@@ -219,6 +226,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 true_muon_purity,
                 true_muonPandoraPrimary,
                 true_muon_nhit,
+                true_muonRRatio,
                 true_slcEff,
                 true_slcPur
             }, 
@@ -241,6 +249,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "depEnergy",
                 "pandoraPrimary",
                 "nhit",
+                "R",
                 "sliceEfficiency", 
                 "slicePurity"
             },
@@ -258,6 +267,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 reco_true_proton_depEnergy,
                 reco_true_protonPandoraPrimary,
                 reco_true_proton_hnit,
+                reco_true_protonRRatio,
                 reco_true_slcEff_proton,
                 reco_true_slcPur_proton
             }, 
@@ -280,6 +290,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 "depEnergy",
                 "pandoraPrimary",
                 "nhit",
+                "R",
                 "sliceEfficiency", 
                 "slicePurity"
             }, 
@@ -297,6 +308,7 @@ void CCNp_particleAnaNoNu_cheatingSlice () {
                 true_proton_depEnergy,
                 true_protonPandoraPrimary,
                 true_proton_hnit,
+                true_protonRRatio,
                 true_slcEff_proton,
                 true_slcPur_proton
             }, 

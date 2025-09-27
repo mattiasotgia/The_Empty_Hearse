@@ -184,6 +184,20 @@ namespace vars {
             return -9999;
         });
 
+        const ana::Var slice_muonRRatio ([](const caf::SRSliceProxy *slice) -> double {    
+            std::size_t iPfp = 0;
+            for (auto const& pfp: slice->reco.pfp) {
+                if (std::abs(pfp.trk.truth.p.pdg) == 13 && zero_vtXDist(slice, iPfp)) {
+                    double E_dep_true = pfp.trk.truth.p.startE - pfp.trk.truth.p.endE;
+                    double E_true_in_hits = pfp.trk.truth.bestmatch.energy/3. * pfp.trk.truth.bestmatch.energy_completeness;
+
+                    return E_true_in_hits / E_dep_true;
+                }
+                iPfp++;
+            }
+            return -9999;
+        }); // double slice_muonRRatio
+
         const ana::MultiVar slice_proton_chi2_mu ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
             std::size_t iPfp = 0;
             std::vector<double> chis;
@@ -345,7 +359,7 @@ namespace vars {
             const ana::Var slice_muon_length ([](const caf::SRSliceProxy* slice) -> double {
                 for (auto const& prim: slice->truth.prim) {
                     if (std::abs(prim.pdg) == 13) {
-                        // std::cout << "This is 13 (µ) and primary, pfp.trk.truth.p.parent = " 
+                        // std::cout << "This is 13 (µ) and primary, pfp.trk.truth.p.p arent = " 
                         //           << pfp.trk.truth.p.parent << std::endl; ////////////////////////////////////// COMMENT THIS OUT JUST AFTER CHECK
                         return prim.length;
                     }
@@ -354,6 +368,20 @@ namespace vars {
             });
         }
 
+        const ana::MultiVar slice_protonRRatio ([](const caf::SRSliceProxy* slice) -> std::vector<double> {
+            std::size_t iPfp = 0;
+            std::vector<double> primTag;
+            for (auto const& pfp: slice->reco.pfp) {
+                if (std::abs(pfp.trk.truth.p.pdg) == 2212 && zero_vtXDist(slice, iPfp)) {
+                    double E_dep_true = pfp.trk.truth.p.startE - pfp.trk.truth.p.endE;
+                    double E_true_in_hits = pfp.trk.truth.bestmatch.energy/3. * pfp.trk.truth.bestmatch.energy_completeness;
+
+                    primTag.push_back(E_true_in_hits / E_dep_true);
+                }
+                iPfp++;
+            }
+            return primTag;
+        });
     }
 } 
 
