@@ -6,14 +6,26 @@ figHeight=5
 legendNCols=1
 
 [energies]
+# [energies.low]
+# label='Low energy ($E_\nu\leq475$ MeV, $\mu$BooNE signal region)'
+# low=0.24
+# high=0.475
+# ylims=[0.345, 0.915]
+
+# [energies.high]
+# label='High energy ($E_\nu\geq475$ MeV, $\mu$BooNE control region)'
+# low=0.475
+# high=2.4
+# ylims=[0.434, 0.935]
+
 [energies.low]
-label='Low energy ($E_\nu\leq475$ MeV, $\mu$BooNE signal region)'
+label='Low energy ($E_\nu\leq800$ MeV)'
 low=0.24
-high=0.475
+high=0.8
 ylims=[0.345, 0.915]
 
 [energies.high]
-label='High energy ($E_\nu\geq475$ MeV, $\mu$BooNE control region)'
-low=0.475
+label='High energy ($E_\nu\geq800$ MeV)'
+low=0.8
 high=2.4
 ylims=[0.434, 0.935]
