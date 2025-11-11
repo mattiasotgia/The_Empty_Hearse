@@ -28,9 +28,13 @@
 
 namespace huntingMichelsVars {
 
-  std::vector<std::pair<double, double>> getEnergyTrackscore(const caf::SRSpillProxy* sr) {
+  struct electronVariables {
+    double E, score, completeness, purity;
+  };
 
-    std::vector<std::pair<double, double>> returnStuff;
+  std::vector<electronVariables> getEnergyTrackscore(const caf::SRSpillProxy* sr) {
+
+    std::vector<electronVariables> returnStuff;
 
     for (auto const& true_particle: sr->true_particles) {
 
@@ -47,7 +51,13 @@ namespace huntingMichelsVars {
         for (auto const& pfp: slice.reco.pfp) {
           if (pfp.trk.truth.bestmatch.G4ID == trueG4ID) {
             // particle match!
-            returnStuff.emplace_back(std::make_pair(true_particle.plane[true_particle.cryostat][PLANE].visE, pfp.trackScore));
+            returnStuff.emplace_back(electronVariables({
+              // true_particle.plane[true_particle.cryostat][PLANE].visE,
+              true_particle.genE,
+              pfp.trackScore, 
+              pfp.trk.truth.bestmatch.hit_completeness, 
+              pfp.trk.truth.bestmatch.hit_purity
+            }));
           }
         }
       }
@@ -59,18 +69,36 @@ namespace huntingMichelsVars {
 
   const ana::SpillMultiVar E ([](const caf::SRSpillProxy* sr) -> std::vector<double> {
     std::vector<double> returnE;
-    std::vector<std::pair<double, double>> commonReturn = getEnergyTrackscore(sr);
-    for (auto const& [E, score]: commonReturn) {
-	    returnE.emplace_back(E);
+    std::vector<electronVariables> commonReturn = getEnergyTrackscore(sr);
+    for (auto const& variable: commonReturn) {
+	    returnE.emplace_back(variable.E);
     }
     return returnE;
   });
 
   const ana::SpillMultiVar score ([](const caf::SRSpillProxy* sr) -> std::vector<double> {
     std::vector<double> returnScore;
-    std::vector<std::pair<double, double>> commonReturn = getEnergyTrackscore(sr);
-    for (auto const& [E, score]: commonReturn) {
-	    returnScore.emplace_back(score);
+    std::vector<electronVariables> commonReturn = getEnergyTrackscore(sr);
+    for (auto const& variable: commonReturn) {
+	    returnScore.emplace_back(variable.score);
+    }
+    return returnScore;
+  });
+
+  const ana::SpillMultiVar completeness ([](const caf::SRSpillProxy* sr) -> std::vector<double> {
+    std::vector<double> returnScore;
+    std::vector<electronVariables> commonReturn = getEnergyTrackscore(sr);
+    for (auto const& variable: commonReturn) {
+	    returnScore.emplace_back(variable.completeness);
+    }
+    return returnScore;
+  });
+
+  const ana::SpillMultiVar purity ([](const caf::SRSpillProxy* sr) -> std::vector<double> {
+    std::vector<double> returnScore;
+    std::vector<electronVariables> commonReturn = getEnergyTrackscore(sr);
+    for (auto const& variable: commonReturn) {
+	    returnScore.emplace_back(variable.purity);
     }
     return returnScore;
   });
